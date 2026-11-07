@@ -6,6 +6,7 @@ const NOT_BUILT = /^Not built yet: milestone \d$/;
 export default async function* reporter(source) {
   let passed = 0;
   let failed = 0;
+  let unloaded = false;
   for await (const event of source) {
     const { data } = event;
     if (event.type === "test:stdout" || event.type === "test:stderr") yield data.message;
@@ -13,13 +14,17 @@ export default async function* reporter(source) {
     if (event.type === "test:pass") {
       passed++;
       yield `  ✔ ${data.name}\n`;
+    } else if (event.type === "test:fail" && /\.test\.mjs$/.test(data.name)) {
+      // The test file itself failed, before any check ran: an import threw, such as a syntax error.
+      unloaded = true;
+      yield `  ✖ The checks couldn't load your code. The error above shows the file and the line, such as a syntax error in src/.\n`;
     } else if (event.type === "test:fail") {
       failed++;
       yield `  ✖ ${data.name}\n${indent(describe(data.details.error))}\n`;
     }
   }
   const label = process.env.MILESTONE ? `Milestone ${process.env.MILESTONE}` : "Total";
-  yield `\n${label}: ${passed} of ${passed + failed} checks pass\n`;
+  yield unloaded && passed + failed === 0 ? `\n${label}: the checks didn't run\n` : `\n${label}: ${passed} of ${passed + failed} checks pass\n`;
 }
 
 function describe(error) {

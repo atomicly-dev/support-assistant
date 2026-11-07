@@ -4,41 +4,67 @@ Lessons: [Streaming: a partial answer isn't a finished answer](https://atomicly.
 
 ## The situation
 
-A customer asks "Where is order 1042?". The assistant streams its answer, so the customer reads it as it arrives, and it gives the model a `get_order` tool to look the order up.
+A customer asks "Where is order 1042?". The assistant streams its answer, so the customer reads it as it arrives. It also gives the model a `get_order` tool to look the order up.
 
 Two things went wrong in the first version. A dropped connection ended the stream the same way a finished answer does, so a customer saw half a sentence marked done. And the tool took the customer's email as an argument, so a customer who typed someone else's email got that person's order.
 
 ## What you build
 
-**`readStream(events)`**, in `src/stream.mjs`, builds the answer from a stream's typed events. The model client already turns the provider's chunks into these events:
+**`readStream(events)`**, in `src/stream.mjs`, builds the answer from a stream's events, an async iterable. The model client already turns the provider's chunks into these events:
 
 - `{ type: "text", text }`: a piece of the answer
-- `{ type: "finish", status }`: the terminal event, with a status like `readCompletion`'s
+- `{ type: "finish", status }`: the terminal event, with a status like `readCompletion`'s, such as `"complete"` or `"cut_off"`
 - `{ type: "usage", input, output }`: the token counts, which can arrive after the finish, or never
 - `{ type: "error", message }`: the provider failed after the stream started
+- other types, such as `ping` or `tool_calls`
 
-It resolves to `{ status, text, usage, error }`:
+`readStream` resolves to `{ status, text, usage, error }`:
 
-- `status` starts as `"interrupted"`, and only a `finish` event changes it, to the status it carries.
-- `text` adds up the `text` events.
-- `usage` stays `null` until a `usage` event arrives. Unknown usage isn't zero tokens.
-- An `error` event sets `status` to `"failed"` and `error` to its message, and ends the answer. Nothing after it joins the text.
-- Any other type, such as `ping` or `tool_calls`, gets skipped.
+- `status`: the finish event's status, `"interrupted"` when no finish event arrived, or `"failed"` after an error event
+- `text`: the pieces of text, joined
+- `usage`: `{ input, output }`, or `null` when no usage event arrived
+- `error`: the error event's message, or `null`
 
-**`getOrder(args, session, findOrder)`**, in `src/tools.mjs`, is the `get_order` tool. `args` come from the model, and `session` is `{ tenantId, email }`, from the customer's login. `findOrder(orderId)` resolves to an order from `src/lib/orders.mjs`, or `null`. It resolves to:
+**`getOrder(args, session, findOrder)`**, in `src/tools.mjs`, is the `get_order` tool:
 
-- `{ id, status, totalCents, orderedOn }` for an order whose `tenantId` and `email` match the session's. Return only these fields, because the customer can read whatever a tool returns.
-- `{ error: "order not found" }` for every other order: another customer's, another shop's, or one that doesn't exist. They all get the same answer, so nobody can try order numbers to learn which exist.
-- `{ error: "orderId must be an integer" }` when `args.orderId` isn't one.
+- `args` come from the model, such as `{ orderId: 1042 }`.
+- `session` is `{ tenantId, email }`, from the customer's login.
+- `findOrder(orderId)` resolves to an order, `{ id, tenantId, email, status, totalCents, orderedOn }`, or to `null`.
 
-**`runToolCall(call, session, tools, log)`**, in `src/tools.mjs`, runs one tool call from the model, such as `{ id: "call_A1", type: "function", function: { name: "get_order", arguments: '{"orderId":1042}' } }`. `tools` is a `Map` from a tool's name to a function `(args, session) => result`, and `log(message)` records what went wrong. It resolves to the tool message for the next request, `{ role: "tool", tool_call_id: call.id, content }`, where `content` is a JSON string:
+`getOrder` resolves to `{ id, status, totalCents, orderedOn }`, or to `{ error: "order not found" }`.
 
-- the tool's result, for a call that worked
-- `{"error":"unknown tool: <name>"}` for a name that isn't in `tools`
-- `{"error":"arguments are not valid JSON"}` when `JSON.parse` fails
-- a safe error when the tool throws, such as `{"error":"the tool failed, try again later"}`. Pass the error's message to `log`, and keep it out of the content, so the model never sees your database's host name.
+**`runToolCall(call, session, tools, log)`**, in `src/tools.mjs`, runs one tool call from the model:
+
+- `call` looks like `{ id: "call_A1", type: "function", function: { name: "get_order", arguments: '{"orderId":1042}' } }`. Its arguments are a JSON string.
+- `tools` is a `Map` from a tool's name to a function `(args, session) => result`, which can be `async`. `src/assistant.mjs` puts `getOrder` in it, with `findOrder` already filled in.
+- `log(line)` records what went wrong, for you to read.
+
+`runToolCall` resolves to the tool message for the next request, `{ role: "tool", tool_call_id, content }`, where `content` is a JSON string:
+
+| The call | `content` |
+| --- | --- |
+| The tool ran | the tool's result |
+| Its name isn't in `tools` | `{"error":"unknown tool: <name>"}` |
+| Its arguments aren't JSON | `{"error":"arguments are not valid JSON"}` |
+| The tool threw | `{"error":"..."}`, with a safe message you pick |
 
 `GET_ORDER_TOOL`, the tool's definition for the request, is already in the file. It has no customer argument.
+
+## The rules
+
+- Only a finish event finishes the answer. A stream that ends without one stays `"interrupted"`, with the text it got.
+- Unknown usage isn't zero tokens: it stays `null`.
+- An error event ends the answer. Nothing after it counts, not even a finish event.
+- An event type you don't handle gets skipped, not an error.
+- `getOrder` returns only the session customer's own orders, with only the four fields the answer needs, because the customer can read whatever a tool returns.
+- Every other order gets the same `{ error: "order not found" }`, whatever the arguments say: another customer's, and one that doesn't exist. So nobody can try order numbers to learn which exist.
+- Only the tools in the `Map` run, even for a name such as `constructor`.
+- The tool gets the `session` from the login, never anything from the arguments.
+- Every call gets a tool message with its own `id`, failed calls too. A thrown error's details go to `log`, never to the model.
+
+## The new case
+
+Ana Silva buys from both shops with one email. In her Deskworks session, `getOrder` finds her Deskworks order, but not her Kettle & Co order 1048. In her Kettle & Co session, it's the other way round. A customer is an email in one shop. The check **keeps one email's orders apart in each shop** tests it, with a Deskworks order made up for it.
 
 ## Run the checks
 
@@ -48,20 +74,44 @@ npm run milestone -- 2
 
 The checks use the dataset's orders from `data/orders.json`, so they need no database:
 
-- marks a stream that ends without a finish event as interrupted
+- takes the status only from a finish event, so a dropped stream stays interrupted
 - keeps the usage unknown when the stream ends before its usage event
 - stops at an error event, and skips event types it doesn't handle
 - looks up the session customer's own order, with only the fields the answer needs
-- answers another customer's order, another shop's, and a missing one the same way
+- answers another customer's order and a missing one the same way, whatever the arguments say
+- keeps one email's orders apart in each shop
 - runs only the tools on its list
+- passes the tool the session from the login, whatever the arguments say
 - answers every call with a tool message that names its id, failed calls too
 
 ## Hints
 
-- Sections 2 and 3 of [Streaming](https://atomicly.dev/lessons/ai-stream-events), *Only a terminal event finishes the answer* and *Skip what you don't handle, stop on an error*, build `readStream` step by step.
-- Section 2 of [Tool calling](https://atomicly.dev/lessons/ai-tool-contracts), *Identity comes from the session*, shows why `getOrder` compares the order with the session, never with an argument. Here a customer is an email in one shop. The same email can belong to a customer of both shops, so a Deskworks session with Chen Wei's email still can't see his Kettle & Co order 1042.
-- Section 3 of the same lesson, *Check the call before you run it*, shows the dispatcher, and why a `Map` holds the tools: a plain object also finds `toString`.
-- Section 2 of [The agent loop](https://atomicly.dev/lessons/ai-tool-transcript), *Answer every call, even the failed ones*, shows the safe error, and why each tool message copies its call's `id`.
+Open them one at a time, when you're stuck.
+
+<details>
+<summary>Hint 1: where the course teaches it</summary>
+
+- [Streaming](https://atomicly.dev/lessons/ai-stream-events): section 2, *Only a terminal event finishes the answer*, and section 3, *Skip what you don't handle, stop on an error*.
+- [Tool calling](https://atomicly.dev/lessons/ai-tool-contracts): section 2, *Identity comes from the session*, and section 3, *Check the call before you run it*.
+- [The agent loop](https://atomicly.dev/lessons/ai-tool-transcript): section 2, *Answer every call, even the failed ones*.
+
+</details>
+
+<details>
+<summary>Hint 2: the approach</summary>
+
+- `readStream`: start from the answer a dropped stream gets, and let each event type change only its own field. An error event stops the loop.
+- `getOrder`: look the order up by its id, then compare its owner with the session, in both of the ways a customer is told apart. Copy the four fields into a new object.
+- `runToolCall`: check the name, then parse the arguments, then run the tool, each step with its own failure. Build every message in one place, so each one copies the call's `id`.
+
+</details>
+
+<details>
+<summary>Hint 3: a detail that's easy to get wrong</summary>
+
+A tool can be `async`, as `getOrder` is. Without `await`, `JSON.stringify` gets a Promise and writes `{}`, and a `try` around the call never sees the tool's error.
+
+</details>
 
 ## The solution
 

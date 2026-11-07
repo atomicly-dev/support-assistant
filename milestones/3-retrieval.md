@@ -10,35 +10,62 @@ And when the assistant did find the right chunk, the model once cited a chunk th
 
 ## What you build
 
-All three functions go in `src/retrieval.mjs`.
+All three functions go in `src/retrieval.mjs`. The file already has `MAX_DISTANCE` (0.55), `MAX_SOURCES` (4), `HANDOFF`, `ANSWER_INSTRUCTIONS`, `ANSWER_FORMAT`, and `evidenceBlock(sources)`.
 
-**`searchChunks(db, session, embedding, limit = 5)`** finds the chunks nearest to a question's embedding. `db` is a pg Pool from `src/lib/db.mjs`, `session` is `{ tenantId, ... }`, and `embedding` is an array of 256 numbers. It resolves to at most `limit` rows `{ id, content, distance }`:
+**`searchChunks(db, session, embedding, limit = 5)`** finds the chunks nearest to a question's embedding:
 
-- only chunks with the session's `tenant_id`, filtered in the query's `WHERE`, so the filter runs before `LIMIT`
-- only chunks of a document's current version: join `documents` on the id and the version, and keep `status = 'current'`
-- `distance` is the cosine distance, pgvector's `<=>`, and the rows are nearest first, with `id` breaking ties
+- `db` is a pg Pool from `src/lib/db.mjs`. `await db.query(sql, values)` resolves to `{ rows }`.
+- `session` is `{ tenantId, ... }`, from the customer's login.
+- `embedding` is an array of 256 numbers.
 
-Pass the embedding as a query parameter, cast with `::vector`. pgvector reads a vector from text such as `[0.1,0.2,0.3]`, which is what `JSON.stringify(embedding)` gives you. The tables are in `data/ai-support.sql`.
+It resolves to at most `limit` rows `{ id, content, distance }`, where `distance` is the cosine distance, as a number. The tables are in `data/ai-support.sql`. Each chunk has its shop's `tenant_id`, its document's `document_id`, and the `version` of the document it comes from. Each version of a document has a `status`, `'current'` or `'stale'`.
 
-**`checkCitations(answer, sources)`** checks an answer's citations against the sources the request sent. It returns `{ ok: true }` for a reply whose `status` is `"insufficient"`, or for one whose citations are all among the sources' ids. Otherwise it returns `{ ok: false, reason }`:
+**`checkCitations(answer, sources)`** checks a reply's citations against the sources the request sent. `answer` is the model's parsed reply, `{ status, text, citations }`, and `sources` are rows like `searchChunks`' rows:
 
-- `"no citations"` for an answered reply with an empty `citations` list
-- `` `cited chunks that weren't sent: ${ids}` `` with every unknown id, in the order of the citations, joined with `, `
+| The reply | It returns |
+| --- | --- |
+| `status` is `"insufficient"` | `{ ok: true }` |
+| it cites only the sources' ids | `{ ok: true }` |
+| it cites nothing | `{ ok: false, reason: "no citations" }` |
+| it cites ids that weren't sent | `{ ok: false, reason: "cited chunks that weren't sent: <ids>" }` |
 
-**`answerQuestion(question, rows, model)`** answers from the rows `searchChunks` returned, with one `model.complete` call at most:
+`<ids>` is every unknown id, in the order of the citations, joined with `, `.
 
-1. Keep the rows with a `distance` of at most `MAX_DISTANCE`, 0.55, and at most `MAX_SOURCES`, 4, of them. These are the sources.
-2. With no source left, hand off, and don't call the model.
-3. Call `model.complete` with a developer message, `ANSWER_INSTRUCTIONS`, and a user message with `evidenceBlock(sources)` and the question in `<question>` tags. Send `response_format: ANSWER_FORMAT` and `max_completion_tokens: 400`.
-4. Parse only a `"complete"` result. Its JSON is `{ status, text, citations }`. Check the citations with `checkCitations`.
+**`answerQuestion(question, rows, model)`** answers from the rows `searchChunks` returned, nearest first, with one `model.complete(request)` call at most. `model.complete` resolves to a result like milestone 1's, `{ status, text, usage }`. A complete reply's text is JSON for `ANSWER_FORMAT`: `{ status, text, citations }`. The request holds:
 
-It resolves to `{ status: "answered", text, citations }`, or to `{ status: "insufficient", text: HANDOFF, reason }` when a person should answer instead. The reason is `"no sources"`, the result's status for a reply that isn't complete, `"invalid JSON"`, `"insufficient"` when the reply's own status is `"insufficient"`, or `checkCitations`' reason.
+- a developer message with `ANSWER_INSTRUCTIONS`
+- a user message with the sources from `evidenceBlock`, and the question between `<question>` and `</question>`
+- `response_format: ANSWER_FORMAT`, and `max_completion_tokens: 400`
 
-The file already has `MAX_DISTANCE`, `MAX_SOURCES`, `HANDOFF`, `ANSWER_INSTRUCTIONS`, `ANSWER_FORMAT`, and `evidenceBlock`.
+`answerQuestion` resolves to `{ status: "answered", text, citations }`, or to `{ status: "insufficient", text: HANDOFF, reason }`, so a person answers instead:
+
+| When | `reason` |
+| --- | --- |
+| no row is a source | `"no sources"` |
+| the result isn't complete | its status, such as `"refused"` |
+| its text isn't JSON | `"invalid JSON"` |
+| the reply's own status is `"insufficient"` | `"insufficient"` |
+| `checkCitations` fails | `checkCitations`' reason |
+
+## The rules
+
+- `searchChunks` finds only the session's shop's chunks, and only chunks of each document's current version.
+- Another shop's chunk or an old version never comes back from the database, so neither takes one of the `limit` places.
+- The rows come nearest first. Two rows at the same distance come in id order, so every run returns the same rows.
+- A tenant id no shop has finds nothing, even one with a quote in it, such as `kettleandco' OR 'x' = 'x`.
+- The sources are the nearest rows with a distance of at most `MAX_DISTANCE`, and at most `MAX_SOURCES` of them. With none, `answerQuestion` hands off without a model call.
+- Only a complete result gets parsed.
+- Every citation is a source the request sent, not just any row.
+
+## The new case
+
+Last week, Kettle & Co published version 3 of its refund policy with a typo: 3 days instead of 30. It rolled back to version 2 the same day. Version 3 is still in the table, `'stale'`, and nearer to the question than version 2. The newest version isn't always the current one.
+
+The check **leaves out a newer version the shop rolled back** adds version 3 in a transaction, and rolls it back after the search. The search's first row should still be version 2's.
 
 ## Run the checks
 
-This milestone needs the database:
+This milestone needs the database. See [Start](../README.md#start) in the README:
 
 ```sh
 docker compose up -d --wait
@@ -46,22 +73,48 @@ npm run setup
 npm run milestone -- 3
 ```
 
-The search checks run your query against the real embeddings. The answer checks use rows recorded from the same data, in `tests/fixtures/search-rows.json`, and a fake model:
+The search checks run your query against the real embeddings. Two of them add rows in a transaction and roll it back, so the data stays as `npm run setup` loaded it. The answer checks use rows recorded from the same data, in `tests/fixtures/search-rows.json`, and a fake model:
 
 - searches only the session's shop
 - searches only the current version of each document
-- returns at most the limit, nearest first, with each row's id, content, and distance
+- leaves out a newer version the shop rolled back
+- returns at most the limit, nearest first, with ties in id order
 - hands a question with no chunk within 0.55 to a person, without a model call
 - sends only the chunks within 0.55, at most 4, each with its id
-- rejects an answer that cites a chunk that wasn't sent
-- hands off a refused or cut-off reply without parsing it
+- asks with the instructions, the answer schema, a token limit, and the question in its tags
+- rejects an answer with no citations, or one that cites a chunk that wasn't sent
+- hands off a reply that isn't complete, isn't JSON, or says the sources don't answer
 
 To try your query by hand, connect with `docker compose exec postgres psql -U postgres support`.
 
 ## Hints
 
-- Sections 1 and 2 of [Vector search](https://atomicly.dev/lessons/ai-vector-search), *The nearest chunk belongs to another shop* and *An old version is still in the table*, write this query in SQL. Take the tenant from `session.tenantId`, never from the question.
-- Section 2 of [RAG](https://atomicly.dev/lessons/ai-grounded-answers), *No evidence, no model call*, writes `answerQuestion`, and section 3, *Check the citations*, writes the citation check. It also says what the check can't prove: a citation of the right chunk with the wrong number still passes. Milestone 4's answer eval catches that.
+Open them one at a time, when you're stuck.
+
+<details>
+<summary>Hint 1: where the course teaches it</summary>
+
+- [Vector search](https://atomicly.dev/lessons/ai-vector-search): section 1, *The nearest chunk belongs to another shop*, and section 2, *An old version is still in the table*. The end of section 3, *Pick a distance operator*, explains the ties.
+- [RAG](https://atomicly.dev/lessons/ai-grounded-answers): section 1, *Give the model its sources, with their ids*, section 2, *No evidence, no model call*, and section 3, *Check the citations, and know what the check can't prove*.
+
+</details>
+
+<details>
+<summary>Hint 2: the approach</summary>
+
+- `searchChunks`: one query does all of it. It keeps the session's shop, keeps each chunk only when its own version of the document is the current one, orders by the distance and then the id, and stops at the limit. The current version is the one whose status is `'current'`, which isn't always the highest number.
+- `answerQuestion`: pick the sources first, and return before the call when none is left. After the call, check the status, then parse, then read the reply's own status, then check the citations against the sources.
+
+</details>
+
+<details>
+<summary>Hint 3: details that are easy to get wrong</summary>
+
+- Send the embedding as a query parameter, as `JSON.stringify(embedding)`, and cast it in the SQL with `::vector`. pg sends a JavaScript array as a PostgreSQL array, `{0.03,0.09,...}`, which pgvector can't read. pgvector reads `[0.03,0.09,...]`.
+- Send the tenant id and the limit as query parameters too, such as `$1` and `$3`, never in the SQL text.
+- Don't round the distance in SQL. pg turns a `numeric` into a string, so `round(...)::numeric` comes back as `'0.346'`.
+
+</details>
 
 ## The solution
 

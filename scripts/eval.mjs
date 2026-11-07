@@ -76,12 +76,21 @@ async function retrievalEval(before) {
   // The handoff policy from milestone 3: no chunk within MAX_DISTANCE means a person answers.
   const wrong = cases.filter((c) => c.relevant.length > 0 === nearest[c.id] > MAX_DISTANCE).map((c) => c.id);
   console.log(`  Handoff at ${MAX_DISTANCE} is wrong for ${wrong.length} of ${cases.length} questions${wrong.length ? `: ${wrong.join(", ")}` : ""}`);
+  const wrongBefore = before?.handoffWrong;
+  if (Array.isArray(wrongBefore)) {
+    const same = wrongBefore.length === wrong.length && wrongBefore.every((id) => wrong.includes(id));
+    if (same && wrong.length > 0) {
+      console.log(`    The baseline has the same ${wrong.length}. The ${MAX_DISTANCE} limit is a policy to tune, not a bug in your search: section 3 of Retrieval evals shows why.`);
+    } else if (!same) {
+      console.log(`    The baseline has ${wrongBefore.length}${wrongBefore.length ? `: ${wrongBefore.join(", ")}` : ""}.`);
+    }
+  }
   // A permissions check: if a change drops the shop filter, this fails at once.
   const { rows } = await db.query("SELECT id, tenant_id FROM chunks");
   const shopOf = new Map(rows.map((row) => [row.id, row.tenant_id]));
   const leaks = cases.flatMap((c) => rankings[c.id].slice(0, K).filter((id) => shopOf.get(id) !== c.shop));
   console.log(`  Other shops' chunks in a top ${K}: ${leaks.length}${leaks.length ? ` (${leaks.join(", ")})` : ""}`);
-  return metrics;
+  return { ...metrics, handoffWrong: wrong };
 }
 
 async function answerEval(before = []) {

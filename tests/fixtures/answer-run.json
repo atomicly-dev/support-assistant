@@ -2,7 +2,7 @@
   "about": "A made-up run of the answer eval on evals/answer-cases.json, not recorded from a real model: each case's answer from the assistant, and the judge's model result. kc-billed-twice has no judge result, like a judge call that timed out and stored nothing. baseline holds an earlier run's grades, the score to beat.",
   "answers": {
     "kc-refund-window": { "status": "answered", "text": "You have 30 days from delivery to ask for a refund.", "citations": ["kc-refund-policy-v2-1"] },
-    "kc-used-knife": { "status": "answered", "text": "Of course! We'll send you a full refund for the knife right away.", "citations": ["kc-returns-v1-3"] },
+    "kc-used-knife": { "status": "answered", "text": "Yes, send the knife back and we'll give you a full refund.", "citations": ["kc-returns-v1-3"] },
     "kc-price-match": { "status": "insufficient", "text": "A person from our support team will reply soon.", "reason": "no sources" },
     "kc-cracked-mug": { "status": "answered", "text": "Send us a photo from the Orders page within 7 days of delivery, and we'll send a free replacement.", "citations": ["kc-damaged-items-v1-1", "kc-damaged-items-v1-2"] },
     "kc-office-chair": { "status": "answered", "text": "Yes, office chairs can be returned within 30 days, even after assembly.", "citations": ["kc-returns-v1-3"] },

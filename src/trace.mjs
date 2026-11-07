@@ -10,9 +10,8 @@
 import { estimatedUsd, usageUsd } from "./lib/prices.mjs";
 
 /**
- * Prices a trace's model spans in US dollars: from usage when it arrived, and from the call's
- * worst case, estimatedUsd({ input, maxOutput }), when it didn't. Other spans cost nothing.
- * Returns { fromUsage, estimated }, the two sums kept apart.
+ * Prices a trace's model calls in US dollars. Returns { fromUsage, estimated }, two sums kept apart:
+ * the calls whose usage arrived, and the worst case of the calls whose usage didn't.
  */
 export function traceTotals(spans) {
   const models = spans.filter((span) => span.name === "model");

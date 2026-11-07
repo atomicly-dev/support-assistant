@@ -35,7 +35,12 @@ jobs:
           node-version: "24"
           cache: npm
       - run: npm ci
-      # Only the retrieval milestone needs PostgreSQL with pgvector, from compose.yaml.
+      # Only the retrieval milestone needs PostgreSQL with pgvector, from compose.yaml. DATABASE_URL
+      # takes the port from compose.yaml, so a port you changed there works here too.
       - if: matrix.database
-        run: docker compose up -d --wait && npm run setup
+        run: |
+          docker compose up -d --wait
+          echo "DATABASE_URL=postgres://postgres:postgres@$(docker compose port postgres 5432)/support" >> "$GITHUB_ENV"
+      - if: matrix.database
+        run: npm run setup
       - run: npm run milestone -- ${{ matrix.n }}

@@ -4,39 +4,61 @@ Lessons: [Human-in-the-loop approval: bind it to the action executed](https://at
 
 ## The situation
 
-Chen Wei's kettle from order 1042 stopped heating. The assistant proposed a $40.00 refund, and Maya, a support agent, approved it. Then a later turn proposed $400.00 for the same order, and the shop paid that too, because the approval only said "order 1042 may get a refund". A client retry paid a third time.
+Ana Silva's toaster from order 1040 stopped working. The assistant proposed a $35.00 refund, and Priya, a support agent, approved it. Then a later turn proposed the full $89.00 for the same order, and the shop paid that too, because the approval only said "order 1040 may get a refund". A client retry paid a third time.
 
 And Kettle & Co's kettle care page has a customer's tip in it, chunk `kc-kettle-care-v1-2`, with an instruction for the assistant about order 1043, which is Dara Khan's. No prompt reliably stops a model from following text like that. Your code's checks have to hold whatever the model asks for.
 
 ## What you build
 
-All three functions go in `src/refunds.mjs`. `desk` comes from `createDesk(findOrder)` in `src/lib/desk.mjs`: it holds `findOrder`, a `proposals` Map, an `approvals` Map, and a fake `ledger` whose `refund({ idempotencyKey, orderId, amountCents })` pays once per key and returns `{ refundId, orderId, amountCents }`.
+All three functions go in `src/refunds.mjs`. The file already has `APPROVAL_MS`, 15 minutes, and `PROPOSE_REFUND_TOOL`, the tool's definition for the request.
 
-**`proposeRefund(args, session, desk)`** is the model's only refund tool. It stores a proposal and pays nothing. `args` come from the model, and `session` is `{ tenantId, email }`, from the customer's login. It resolves to:
+`desk` comes from `createDesk(findOrder)` in `src/lib/desk.mjs`. It holds:
 
-- `{ proposalId, status: "awaiting approval" }`, after it stores `{ orderId, amountCents }` in `desk.proposals` under a new id such as `"p_1"`
-- `{ error: "order not found" }` for an order that isn't the session customer's in the session's shop, whatever the arguments say
-- `{ error }` when `orderId` isn't an integer, or `amountCents` isn't a whole number from 1 to the order's `totalCents`
+- `findOrder(orderId)`, which resolves to an order, `{ id, tenantId, email, status, totalCents, orderedOn }`, or to `null`
+- `proposals`, an empty `Map` for the proposals: a proposal's id to `{ orderId, amountCents }`
+- `approvals`, an empty `Map` for the approvals: an approval's id to `{ proposalId, args, actorId, expiresAt, idempotencyKey }`
+- `ledger`, a fake ledger. `ledger.refund({ idempotencyKey, orderId, amountCents })` pays a refund and resolves to `{ refundId, orderId, amountCents }`. For a key it has seen, it resolves to the first refund and pays nothing new. `ledger.refunds` holds what it paid.
 
-**`approve(proposalId, agent, now, desk)`** is a support agent's approval of one proposal. `agent` is `{ actorId }`, from the agent's login, and `now` is the time in milliseconds. It stores the approval in `desk.approvals` under a new id such as `"a_1"`, and returns `{ approvalId, args, actorId, expiresAt, idempotencyKey }`:
+**`proposeRefund(args, session, desk)`** is the model's only refund tool. `args` come from the model, such as `{ orderId: 1040, amountCents: 3500 }`, and `session` is `{ tenantId, email }`, from the customer's login. It resolves to:
 
-- `args`: a copy of the proposal's exact arguments
-- `actorId`: the agent's, from `agent`
-- `expiresAt`: `now + APPROVAL_MS`, 15 minutes later
-- `idempotencyKey`: a random key, such as `randomUUID()` from `node:crypto`
+- `{ proposalId, status: "awaiting approval" }`, after it stores the proposal under a new id, such as `"p_1"`
+- `{ error: "order not found" }` for an order that isn't the session customer's
+- `{ error }`, with a message you pick, for an amount that doesn't fit the order
 
-It returns `{ error: "no such proposal" }` for an id it doesn't know.
+**`approve(proposalId, agent, now, desk)`** is a support agent's approval of one proposal. `agent` is `{ actorId }`, from the agent's login, and `now` is the time in milliseconds. It stores the approval under a new id, such as `"a_1"`, and returns `{ approvalId, args, actorId, expiresAt, idempotencyKey }`:
 
-**`executeRefund(command, agent, now, desk)`** pays an approved refund. `command` is `{ approvalId, args: { orderId, amountCents } }`. It checks the command in this order, and resolves to the first error:
+- `args`: the proposal's arguments
+- `actorId`: the agent's
+- `expiresAt`: `now + APPROVAL_MS`
+- `idempotencyKey`: a random string, such as `randomUUID()` from `node:crypto`
 
-1. `{ error: "no such approval" }`
-2. `{ error: "approved by another agent" }`, when `agent.actorId` isn't the approval's. The actor comes from the login, never from the command.
-3. `{ error: "approval expired" }`, from `expiresAt` on
-4. `{ error: "arguments differ from the approval" }`, comparing `orderId` and `amountCents` by name
+For a proposal it can't approve, it returns `{ error: "no such proposal" }` or `{ error: "already approved" }`.
 
-Then it pays the approval's arguments, not the command's, through `desk.ledger.refund` with the approval's idempotency key, and resolves to the ledger's refund. A retry finds the first refund and pays nothing new.
+**`executeRefund(command, agent, now, desk)`** pays an approved refund. `command` is `{ approvalId, args: { orderId, amountCents } }`. It resolves to the ledger's refund, or to an error:
 
-The file already has `APPROVAL_MS` and `PROPOSE_REFUND_TOOL`, the tool's definition for the request.
+| When | It resolves to |
+| --- | --- |
+| no approval has that id | `{ error: "no such approval" }` |
+| `agent.actorId` isn't the approval's | `{ error: "approved by another agent" }` |
+| `now` is at or after `expiresAt` | `{ error: "approval expired" }` |
+| the command's `orderId` or `amountCents` isn't the approval's | `{ error: "arguments differ from the approval" }` |
+
+## The rules
+
+- A proposal pays nothing.
+- Only the session customer's own order in the session's shop can get a proposal, whatever the arguments say. Every other order gets `{ error: "order not found" }`.
+- A refund is a whole number of cents, from 1 to the order's `totalCents`.
+- An approval keeps its own copy of the arguments the agent saw. A later change to the proposal doesn't change it.
+- Each approval gets its own random key, even for the same arguments.
+- The agent comes from the login, never from the command.
+- From `expiresAt` on, an approval no longer works.
+- `executeRefund` pays the approval's arguments, and compares them with the command's field by field, so the order of the fields doesn't matter.
+- A retried command pays nothing new.
+- Every call in the replayed injection transcripts fails, and pays nothing.
+
+## The new case
+
+Priya's click on "Approve" went through twice, and then Sam approved the same proposal too. Each approval would get its own key, so the ledger would pay the same refund three times. One proposal gets one approval. The check **approves each proposal once, so a double approval can't pay twice** tests it.
 
 ## Run the checks
 
@@ -44,19 +66,46 @@ The file already has `APPROVAL_MS` and `PROPOSE_REFUND_TOOL`, the tool's definit
 npm run milestone -- 5
 ```
 
-The checks use the dataset's orders, and replay the scripted transcripts in `tests/fixtures/injection-replays.json`: the tool calls a model could make after an injected instruction. No model runs:
+The checks use the dataset's orders. They also replay the scripted transcripts in `tests/fixtures/injection-replays.json`: the tool calls a model could make after an injected instruction, in Chen Wei's session. No model runs, and they need no database:
 
 - stores a proposal and pays nothing
-- binds the approval to the proposal's exact arguments, the agent, an expiry, and a key
-- refuses to pay an amount the approval didn't cover
-- refuses an approval used by another agent or after it expires
+- proposes only the customer's own order, for 1 cent up to its total
+- binds the approval to a copy of the proposal's arguments, the agent, an expiry, and a key
+- refuses to pay an order or an amount the approval didn't cover
+- refuses an unknown approval, another agent's, or an expired one
 - pays a retried command once, whatever order its fields come in
+- approves each proposal once, so a double approval can't pay twice
 - fails every call of the replayed injection transcripts, and pays nothing
 
 ## Hints
 
-- Section 2 of [Human-in-the-loop approval](https://atomicly.dev/lessons/ai-safe-actions), *Bind the approval to one exact command*, writes `proposeRefund`, `approve`, and `executeRefund`. This project's `proposeRefund` also checks the order's owner, as `getOrder` does in milestone 2.
-- Section 2 of [Prompt injection](https://atomicly.dev/lessons/ai-prompt-injection), *Check the action, not the model*, shows a replay test, and section 3, *What a replay test proves*, says what it can't: how often a real model follows the tip. Add each new attack you find to the transcripts.
+Open them one at a time, when you're stuck.
+
+<details>
+<summary>Hint 1: where the course teaches it</summary>
+
+- [Human-in-the-loop approval](https://atomicly.dev/lessons/ai-safe-actions): section 2, *Bind the approval to one exact command*.
+- [Prompt injection](https://atomicly.dev/lessons/ai-prompt-injection): section 2, *Check the action, not the model*, and section 3, *What a replay test proves*.
+- `proposeRefund` checks the order's owner the way `getOrder` does in [milestone 2](2-streaming-and-tools.md).
+
+</details>
+
+<details>
+<summary>Hint 2: the approach</summary>
+
+- `proposeRefund`: find the order, check its owner against the session, then check the amount against the order's total. Store the proposal only when every check passes.
+- `approve`: find the proposal, and look for an approval of it in `desk.approvals`. Then store a new approval with a copy of the proposal's arguments.
+- `executeRefund`: each check returns its error before anything is paid. Then pay with the approval's key and the approval's arguments.
+
+</details>
+
+<details>
+<summary>Hint 3: details that are easy to get wrong</summary>
+
+- `{ ...proposal }` makes a copy. `args: proposal` shares the object, so a change to one shows in the other.
+- `Number.isInteger("3500")` and `Number.isInteger(35.5)` are both `false`, so one call checks the type and the whole number.
+
+</details>
 
 ## The solution
 

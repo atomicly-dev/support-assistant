@@ -41,8 +41,8 @@ export const evidenceBlock = (sources) => sources.map((s) => `<source id="${s.id
  * Finds the chunks nearest to a question's embedding, from the session's shop and its documents'
  * current versions only. `db` is a pg Pool, `session` is { tenantId, ... }, and `embedding` is an
  * array of 256 numbers.
- * Resolves to at most `limit` rows { id, content, distance }, nearest first, by cosine distance,
- * with the id breaking ties.
+ * Resolves to at most `limit` rows { id, content, distance }, nearest first by cosine distance, and
+ * in id order at the same distance.
  */
 export async function searchChunks(db, session, embedding, limit = 5) {
   const { rows } = await db.query(

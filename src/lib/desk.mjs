@@ -8,7 +8,7 @@ export function createDesk(findOrder) {
   return {
     findOrder,
     proposals: new Map(), // proposalId → { orderId, amountCents }
-    approvals: new Map(), // approvalId → { args, actorId, expiresAt, idempotencyKey }
+    approvals: new Map(), // approvalId → { proposalId, args, actorId, expiresAt, idempotencyKey }
     ledger: {
       refunds,
       // Pays a refund once per key: a second call with the same key returns the first refund.
