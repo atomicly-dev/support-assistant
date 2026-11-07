@@ -7,7 +7,8 @@ services:
       POSTGRES_DB: support
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-    # Only your own machine can connect.
+    # Only your own machine can connect. If another program uses port 5450, change the first port,
+    # and set DATABASE_URL to match, as the README shows.
     ports:
       - "127.0.0.1:5450:5432"
     # The data lives in memory, so `docker compose down` throws it away. `npm run setup` loads it again.
