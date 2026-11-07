@@ -1,0 +1,20 @@
+name: support-assistant
+services:
+  postgres:
+    # PostgreSQL 18.6 with pgvector 0.8.7, pinned to the image's digest.
+    image: pgvector/pgvector:0.8.7-pg18-trixie@sha256:5895949dfcdf308eb0cd31c950c93c14895c77f33fbedfecf1fa511ab1d4bcd2
+    environment:
+      POSTGRES_DB: support
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    # Only your own machine can connect.
+    ports:
+      - "127.0.0.1:5450:5432"
+    # The data lives in memory, so `docker compose down` throws it away. `npm run setup` loads it again.
+    tmpfs:
+      - /var/lib/postgresql
+    healthcheck:
+      test: ["CMD", "pg_isready", "-h", "127.0.0.1", "-U", "postgres", "-d", "support"]
+      interval: 1s
+      timeout: 3s
+      retries: 60

@@ -1,0 +1,20 @@
+{
+  "name": "support-assistant",
+  "private": true,
+  "description": "Build a support assistant for two shops, milestone by milestone: a project for atomicly's AI engineering course",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "setup": "node scripts/setup.mjs",
+    "milestone": "node scripts/milestone.mjs",
+    "eval": "node scripts/eval.mjs",
+    "ask": "node scripts/ask.mjs",
+    "check-milestones": "node scripts/check-milestones.mjs"
+  },
+  "dependencies": {
+    "pg": "8.23.1"
+  }
+}

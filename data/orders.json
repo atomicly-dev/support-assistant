@@ -1,0 +1,44 @@
+{
+  "about": "The two shops' orders, refunds, and support tickets, for the text-to-SQL lesson (ai-text-to-sql). All of it is synthetic: the names and emails are made up, on example.com. Order and refund ids are unique across both shops, like the platform's own ids. The lesson's numbers come from these rows: 7 refunds in October 2026, 4 of them Kettle & Co's and 3 Deskworks'. scripts/build-ai-dataset-sql.mjs writes them into ai-support.sql.",
+  "orders": [
+    { "id": 1040, "tenant": "kettleandco", "email": "ana.silva@example.com", "status": "delivered", "total": "89.00", "ordered_on": "2026-09-12" },
+    { "id": 1041, "tenant": "kettleandco", "email": "ben.okafor@example.com", "status": "delivered", "total": "24.50", "ordered_on": "2026-09-21" },
+    { "id": 1042, "tenant": "kettleandco", "email": "chen.wei@example.com", "status": "delivered", "total": "129.00", "ordered_on": "2026-09-30" },
+    { "id": 1043, "tenant": "kettleandco", "email": "dara.khan@example.com", "status": "delivered", "total": "18.00", "ordered_on": "2026-10-03" },
+    { "id": 1044, "tenant": "kettleandco", "email": "eli.rossi@example.com", "status": "delivered", "total": "64.00", "ordered_on": "2026-10-06" },
+    { "id": 1045, "tenant": "kettleandco", "email": "fay.moreau@example.com", "status": "delivered", "total": "45.00", "ordered_on": "2026-10-11" },
+    { "id": 1046, "tenant": "kettleandco", "email": "gus.lind@example.com", "status": "cancelled", "total": "39.00", "ordered_on": "2026-10-13" },
+    { "id": 1047, "tenant": "kettleandco", "email": "hana.sato@example.com", "status": "delivered", "total": "210.00", "ordered_on": "2026-10-20" },
+    { "id": 1048, "tenant": "kettleandco", "email": "ana.silva@example.com", "status": "shipped", "total": "56.00", "ordered_on": "2026-10-29" },
+    { "id": 1049, "tenant": "kettleandco", "email": "ivo.petrov@example.com", "status": "paid", "total": "15.50", "ordered_on": "2026-11-04" },
+    { "id": 2001, "tenant": "deskworks", "email": "kai.berg@example.com", "status": "delivered", "total": "349.00", "ordered_on": "2026-09-08" },
+    { "id": 2002, "tenant": "deskworks", "email": "lena.vogt@example.com", "status": "delivered", "total": "89.00", "ordered_on": "2026-09-25" },
+    { "id": 2003, "tenant": "deskworks", "email": "mo.haddad@example.com", "status": "delivered", "total": "499.00", "ordered_on": "2026-10-02" },
+    { "id": 2004, "tenant": "deskworks", "email": "nina.cole@example.com", "status": "delivered", "total": "129.00", "ordered_on": "2026-10-09" },
+    { "id": 2005, "tenant": "deskworks", "email": "omar.aziz@example.com", "status": "delivered", "total": "59.00", "ordered_on": "2026-10-16" },
+    { "id": 2006, "tenant": "deskworks", "email": "pia.lund@example.com", "status": "shipped", "total": "279.00", "ordered_on": "2026-10-27" },
+    { "id": 2007, "tenant": "deskworks", "email": "raj.mehta@example.com", "status": "paid", "total": "42.00", "ordered_on": "2026-11-05" }
+  ],
+  "refunds": [
+    { "id": 1, "tenant": "kettleandco", "order": 1040, "amount": "89.00", "reason": "changed mind", "refunded_on": "2026-09-25" },
+    { "id": 2, "tenant": "deskworks", "order": 2002, "amount": "89.00", "reason": "faulty", "refunded_on": "2026-09-29" },
+    { "id": 3, "tenant": "deskworks", "order": 2001, "amount": "349.00", "reason": "changed mind", "refunded_on": "2026-10-01" },
+    { "id": 4, "tenant": "kettleandco", "order": 1042, "amount": "129.00", "reason": "faulty", "refunded_on": "2026-10-07" },
+    { "id": 5, "tenant": "kettleandco", "order": 1043, "amount": "18.00", "reason": "damaged", "refunded_on": "2026-10-09" },
+    { "id": 6, "tenant": "kettleandco", "order": 1046, "amount": "39.00", "reason": "cancelled", "refunded_on": "2026-10-14" },
+    { "id": 7, "tenant": "deskworks", "order": 2003, "amount": "499.00", "reason": "damaged", "refunded_on": "2026-10-14" },
+    { "id": 8, "tenant": "kettleandco", "order": 1045, "amount": "12.00", "reason": "wrong item", "refunded_on": "2026-10-20" },
+    { "id": 9, "tenant": "deskworks", "order": 2004, "amount": "129.00", "reason": "wrong item", "refunded_on": "2026-10-31" },
+    { "id": 10, "tenant": "kettleandco", "order": 1047, "amount": "210.00", "reason": "changed mind", "refunded_on": "2026-11-02" }
+  ],
+  "tickets": [
+    { "id": 1, "tenant": "kettleandco", "order": 1042, "email": "chen.wei@example.com", "subject": "My kettle stopped heating", "status": "closed", "opened_on": "2026-10-05" },
+    { "id": 2, "tenant": "kettleandco", "order": 1043, "email": "dara.khan@example.com", "subject": "My mug arrived cracked", "status": "closed", "opened_on": "2026-10-08" },
+    { "id": 3, "tenant": "deskworks", "order": 2003, "email": "mo.haddad@example.com", "subject": "The desk arrived with a cracked leg", "status": "closed", "opened_on": "2026-10-12" },
+    { "id": 4, "tenant": "kettleandco", "order": 1045, "email": "fay.moreau@example.com", "subject": "Wrong lid in the box", "status": "closed", "opened_on": "2026-10-16" },
+    { "id": 5, "tenant": "deskworks", "order": 2004, "email": "nina.cole@example.com", "subject": "I got the wrong lamp", "status": "closed", "opened_on": "2026-10-28" },
+    { "id": 6, "tenant": "deskworks", "order": 2006, "email": "pia.lund@example.com", "subject": "When will my chair arrive?", "status": "open", "opened_on": "2026-11-03" },
+    { "id": 7, "tenant": "kettleandco", "order": 1048, "email": "ana.silva@example.com", "subject": "Where is my parcel?", "status": "open", "opened_on": "2026-11-04" },
+    { "id": 8, "tenant": "deskworks", "order": null, "email": "raj.mehta@example.com", "subject": "Can the invoice show our company name?", "status": "open", "opened_on": "2026-11-06" }
+  ]
+}
