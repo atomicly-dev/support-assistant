@@ -58,7 +58,8 @@ function readVerdict(result) {
   } catch {
     return { grade: "ungraded", reason: "invalid JSON" };
   }
-  if (verdict?.verdict !== "pass" && verdict?.verdict !== "fail") return { grade: "ungraded", reason: `unknown verdict: ${verdict?.verdict}` };
+  if (typeof verdict !== "object" || verdict === null) return { grade: "ungraded", reason: "invalid JSON" };
+  if (verdict.verdict !== "pass" && verdict.verdict !== "fail") return { grade: "ungraded", reason: `unknown verdict: ${verdict.verdict}` };
   return { grade: verdict.verdict, reason: verdict.reason };
 }
 

@@ -14,10 +14,13 @@
  */
 export async function readStream(events) {
   const answer = { status: "interrupted", text: "", usage: null, error: null };
+  let finished = false;
   for await (const event of events) {
-    if (event.type === "text") answer.text += event.text;
-    else if (event.type === "finish") answer.status = event.status;
-    else if (event.type === "usage") answer.usage = { input: event.input, output: event.output };
+    if (event.type === "text" && !finished) answer.text += event.text; // text after the finish isn't part of the answer
+    else if (event.type === "finish") {
+      answer.status = event.status;
+      finished = true; // keep reading: the usage can still come
+    } else if (event.type === "usage") answer.usage = { input: event.input, output: event.output };
     else if (event.type === "error") {
       answer.status = "failed";
       answer.error = event.message;

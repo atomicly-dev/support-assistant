@@ -97,6 +97,7 @@ export async function answerQuestion(question, rows, model) {
   } catch {
     return handoff("invalid JSON");
   }
+  if (typeof answer !== "object" || answer === null) return handoff("invalid JSON");
   if (answer.status !== "answered") return handoff("insufficient");
   const check = checkCitations(answer, sources);
   if (!check.ok) return handoff(check.reason);
