@@ -1,0 +1,82 @@
+name: template-ci
+
+# The template's own check, for its maintainers: on main, every milestone fails, and on the
+# solutions branch, every milestone passes, on main's tests. It runs only in the template repo,
+# never in a copy made from it.
+
+# Each job checks out its own branch, so a push to either branch checks both.
+on:
+  push:
+    branches: [main, solutions]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  starters-fail:
+    if: github.repository == 'atomicly-dev/support-assistant'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+      - run: docker compose up -d --wait && npm run setup
+      - name: milestones.json matches the tests
+        run: npm run check-milestones
+      # A starter must fail every one of its checks, not just one.
+      - name: Every starter fails
+        run: |
+          for n in 1 2 3 4 5 6; do
+            set +e
+            output="$(npm run milestone -- "$n" 2>&1)"
+            code=$?
+            set -e
+            echo "$output"
+            if [ "$code" -ne 1 ] || ! grep -q "^Milestone $n: 0 of " <<<"$output"; then
+              echo "::error::Milestone $n's starter should fail every check."
+              exit 1
+            fi
+          done
+      - if: failure()
+        run: docker compose logs
+
+  solutions-pass:
+    if: github.repository == 'atomicly-dev/support-assistant'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: solutions
+          fetch-depth: 0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
+          cache: npm
+      # The solutions branch may change only the files the learner edits, so its checks are main's.
+      - name: The solutions branch differs from main only in the learner's files
+        run: |
+          allowed="$(node -p 'require("./milestones.json").flatMap((m) => m.files).join("\n")')"
+          changed="$(git diff --name-only origin/main HEAD)"
+          extra="$(comm -23 <(sort <<<"$changed") <(sort <<<"$allowed"))"
+          if [ -n "$extra" ]; then
+            echo "::error::The solutions branch changes files outside milestones.json's files. Merge main into it: $extra"
+            exit 1
+          fi
+      - run: npm ci
+      - run: docker compose up -d --wait && npm run setup
+      # Three runs, to catch a flaky check.
+      - name: Every solution passes
+        run: |
+          for run in 1 2 3; do
+            npm run milestone -- all
+          done
+      - if: failure()
+        run: docker compose logs

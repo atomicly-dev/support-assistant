@@ -1,0 +1,41 @@
+name: milestones
+
+# Runs each milestone's checks on every push, one job per milestone. atomicly reads these jobs'
+# results from GitHub by their names, milestone-1 to milestone-6, so keep the names as they are.
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  milestone:
+    # The template repo checks itself in template-ci.yml instead.
+    if: github.repository != 'atomicly-dev/support-assistant'
+    name: milestone-${{ matrix.n }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - n: 1
+          - n: 2
+          - n: 3
+            database: true
+          - n: 4
+          - n: 5
+          - n: 6
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+      # Only the retrieval milestone needs PostgreSQL with pgvector, from compose.yaml.
+      - if: matrix.database
+        run: docker compose up -d --wait && npm run setup
+      - run: npm run milestone -- ${{ matrix.n }}
