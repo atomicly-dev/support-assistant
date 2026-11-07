@@ -230,13 +230,10 @@ test("answers every call with a tool message that names its id, failed calls too
     logged.some((line) => String(line).includes("orders-db-eu-2")),
     `runToolCall logged ${show(logged)}. Log a line with the error's message, so you can find out what failed.`,
   );
-  let badArgs;
-  try {
-    badArgs = JSON.parse(messages[2].content)?.error;
-  } catch {}
-  assert.ok(
-    typeof badArgs === "string" && badArgs.trim() !== "",
-    `The content for call_M3, whose arguments were '{"orderId":104', was ${show(messages[2].content)}. It should be a JSON error the model can read, such as '{"error":"..."}', with a message you choose.`,
+  assert.equal(
+    messages[2].content,
+    JSON.stringify({ error: "arguments are not valid JSON" }),
+    `The content for call_M3, whose arguments were '{"orderId":104', was ${show(messages[2].content)}. It should be '{"error":"arguments are not valid JSON"}', so the model can fix its call instead of trying it again.`,
   );
   assert.deepEqual(ran, [1048, 1040], `The tool ran for the order ids ${show(ran)}. It should run for call_M1 and call_M2 only: call_M3's arguments aren't JSON, so there's nothing to run it with.`);
 });
