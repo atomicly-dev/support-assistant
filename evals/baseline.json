@@ -4,7 +4,8 @@
     "questions": 10,
     "hitRate": 1,
     "recall": 0.933,
-    "mrr": 0.933
+    "mrr": 0.933,
+    "handoffWrong": ["q-cracked-mug", "q-parcel-never-came", "q-sku"]
   },
   "answers": []
 }
