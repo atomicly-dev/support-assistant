@@ -177,9 +177,10 @@ test("returns at most the limit, nearest first, with ties in id order", async ()
   const { rows, ids, fetched } = await search(kettle, "q-refund-window", 3);
   const expected = ["kc-refund-policy-v2-1", "kc-refund-policy-v2-2", "kc-warranty-v1-2"];
   if (Array.isArray(rows) && rows.length < 3) {
-    const tookPlaces = [...new Set(fetched.map((row) => row?.id).filter((id) => shopOf.get(id) !== "kettleandco" || stale.has(id)))];
+    const queried = [...new Set(fetched.map((row) => row?.id).filter((id) => shopOf.has(id)))];
+    const dropped = queried.filter((id) => shopOf.get(id) !== "kettleandco" || stale.has(id));
     assert.fail(
-      `searchChunks with a limit of 3 returned ${show(ids)}. ${tookPlaces.length > 0 ? `Your query's 3 places went to ${tookPlaces.join(", ")}, another shop's chunks or old versions, and your code dropped them after the limit. ` : ""}It should return 3 rows, ${expected.join(", ")}.`,
+      `searchChunks with a limit of 3 returned ${show(ids)}. ${dropped.length > 0 ? `Your query's 3 places went to ${queried.join(", ")}, and your code dropped ${dropped.join(", ")}, from another shop or an old version, after the limit. ` : ""}It should return 3 rows, ${expected.join(", ")}.`,
     );
   }
   assert.ok(Array.isArray(rows) && rows.length === 3, `searchChunks with a limit of 3 returned ${show(ids)}. It should return at most 3 rows: ${expected.join(", ")}.`);
@@ -272,8 +273,12 @@ test("asks with the instructions, the answer schema, a token limit, and the ques
 
 test("rejects an answer with no citations, or one that cites a chunk that wasn't sent", async () => {
   const sources = [{ id: "kc-warranty-v1-1" }, { id: "kc-warranty-v1-2" }];
+  const uncited = checkCitations({ status: "answered", text: "The warranty lasts 2 years.", citations: [] }, sources);
+  assert.ok(
+    uncited?.ok === false && typeof uncited.reason === "string" && uncited.reason.trim() !== "",
+    `checkCitations returned ${show(uncited)} for an answered reply with no citations. An answer needs at least one source behind it: it should return { ok: false, reason }, with a reason you choose.`,
+  );
   const cases = [
-    [{ status: "answered", text: "The warranty lasts 2 years.", citations: [] }, { ok: false, reason: "no citations" }, "an answered reply with no citations"],
     [
       { status: "answered", text: "2 years, or 3 with registration.", citations: ["kc-warranty-v1-2", "kc-warranty-v2-1", "kc-returns-v1-3"] },
       { ok: false, reason: "cited chunks that weren't sent: kc-warranty-v2-1, kc-returns-v1-3" },
@@ -297,17 +302,19 @@ test("rejects an answer with no citations, or one that cites a chunk that wasn't
   );
 });
 
-test("hands off a reply that isn't complete, isn't JSON, or says the sources don't answer", async () => {
+test("hands off a reply that isn't complete, isn't a JSON object, or says the sources don't answer", async () => {
   const { question, rows } = recorded["q-refund-window"];
+  const usage = { input: 420, output: 9 };
   const replies = [
-    [{ status: "refused", text: null, usage: { input: 420, output: 9 } }, "refused"],
-    [{ status: "cut_off", text: '{"status":"answered","text":"You have 30 days from', usage: { input: 420, output: 400 } }, "cut_off"],
-    [{ status: "complete", text: "You have 30 days from delivery.", usage: { input: 420, output: 9 } }, "invalid JSON"],
-    [complete({ status: "insufficient", text: "", citations: [] }), "insufficient"],
+    [{ status: "refused", text: null, usage }, "refused", "Only a complete reply gets parsed, so it should hand off with the status"],
+    [{ status: "cut_off", text: '{"status":"answered","text":"You have 30 days from', usage: { input: 420, output: 400 } }, "cut_off", "Only a complete reply gets parsed, so it should hand off with the status"],
+    [{ status: "complete", text: "You have 30 days from delivery.", usage }, "invalid JSON", "It should hand off when the text isn't JSON"],
+    [{ status: "complete", text: "null", usage }, "invalid JSON", "null is JSON, but not an answer: it should hand off as invalid JSON"],
+    [complete({ status: "insufficient", text: "", citations: [] }), "insufficient", 'It should hand off when the reply\'s own status is "insufficient"'],
   ];
-  for (const [reply, reason] of replies) {
+  for (const [reply, reason, why] of replies) {
     const result = await answer(question, rows, fakeModel({ replies: [reply] }));
     const expected = { status: "insufficient", text: HANDOFF, reason };
-    assert.deepEqual(result, expected, `answerQuestion returned ${show(result)} for a ${reply.status} reply with the text ${show(reply.text)}. It should hand off, without parsing a reply that isn't complete: ${show(expected)}.`);
+    assert.deepEqual(result, expected, `answerQuestion returned ${show(result)} for a ${reply.status} reply with the text ${show(reply.text)}. ${why}: ${show(expected)}.`);
   }
 });

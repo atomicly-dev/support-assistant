@@ -74,6 +74,19 @@ test("stops at an error event, and skips event types it doesn't handle", async (
   );
 });
 
+test("ends the text at the finish event, and still reads the usage after it", async () => {
+  // The new case: a gateway between the assistant and the provider resends the last piece of text
+  // after the finish event, when it retries a slow connection.
+  const events = [text("Your order 1048 left our warehouse on October 30."), finish("complete"), text(" October 30."), { type: "usage", input: 318, output: 14 }];
+  const answer = await read(events, "a stream with text after its finish event");
+  const expected = { status: "complete", text: "Your order 1048 left our warehouse on October 30.", usage: { input: 318, output: 14 }, error: null };
+  assert.deepEqual(
+    answer,
+    expected,
+    `readStream returned ${show(answer)} for text, a finish, the same text again from the gateway, then the usage. The finish event ends the answer: text after it isn't part of the answer, but the usage that comes after it is. It should return ${show(expected)}.`,
+  );
+});
+
 test("looks up the session customer's own order, with only the fields the answer needs", async () => {
   const result = await getOrder({ orderId: 1048 }, ana, findOrder);
   const expected = { id: 1048, status: "shipped", totalCents: 5600, orderedOn: "2026-10-29" };
@@ -102,10 +115,11 @@ test("answers another customer's order and a missing one the same way, whatever 
 
 test("keeps one email's orders apart in each shop", async () => {
   const own = await getOrder({ orderId: 2010 }, anaAtDeskworks, findOrder);
+  const fields = { id: 2010, status: "paid", totalCents: 18900, orderedOn: "2026-11-02" };
   assert.deepEqual(
     own,
-    { id: 2010, status: "paid", totalCents: 18900, orderedOn: "2026-11-02" },
-    `getOrder returned ${show(own)} for order 2010, Ana's Deskworks order, in her Deskworks session. It's her order in that shop, so it should return it.`,
+    fields,
+    `getOrder returned ${show(own)} for order 2010, Ana's Deskworks order, in her Deskworks session. It's her order in that shop, so it should return ${show(fields)}.`,
   );
   const cases = [
     ["order 1048, Ana's Kettle & Co order, in her Deskworks session", { orderId: 1048 }, anaAtDeskworks],
@@ -116,7 +130,7 @@ test("keeps one email's orders apart in each shop", async () => {
     assert.deepEqual(
       result,
       { error: "order not found" },
-      `getOrder returned ${show(result)} for ${label}. A customer is an email in one shop: each session sees only that shop's orders, so it should return { error: 'order not found' }.`,
+      `getOrder returned ${show(result)} for ${label}. A customer is an email in one shop, so each session sees only that shop's orders: it should return { error: 'order not found' }.`,
     );
   }
 });
@@ -169,10 +183,12 @@ test("passes the tool the session from the login, whatever the arguments say", a
 
 test("answers every call with a tool message that names its id, failed calls too", async () => {
   const logged = [];
+  const ran = [];
   const tools = new Map([
     [
       "get_order",
       async ({ orderId }) => {
+        ran.push(orderId);
         if (orderId === 1040) throw new Error("connection terminated: orders-db-eu-2.internal:5432");
         return { id: orderId, status: "shipped" };
       },
@@ -214,9 +230,13 @@ test("answers every call with a tool message that names its id, failed calls too
     logged.some((line) => String(line).includes("orders-db-eu-2")),
     `runToolCall logged ${show(logged)}. Log a line with the error's message, so you can find out what failed.`,
   );
-  assert.equal(
-    messages[2].content,
-    JSON.stringify({ error: "arguments are not valid JSON" }),
-    `The content for call_M3, whose arguments were '{"orderId":104', was ${show(messages[2].content)}. It should be '{"error":"arguments are not valid JSON"}'.`,
+  let badArgs;
+  try {
+    badArgs = JSON.parse(messages[2].content)?.error;
+  } catch {}
+  assert.ok(
+    typeof badArgs === "string" && badArgs.trim() !== "",
+    `The content for call_M3, whose arguments were '{"orderId":104', was ${show(messages[2].content)}. It should be a JSON error the model can read, such as '{"error":"..."}', with a message you choose.`,
   );
+  assert.deepEqual(ran, [1048, 1040], `The tool ran for the order ids ${show(ran)}. It should run for call_M1 and call_M2 only: call_M3's arguments aren't JSON, so there's nothing to run it with.`);
 });

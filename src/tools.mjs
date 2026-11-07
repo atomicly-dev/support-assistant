@@ -22,8 +22,8 @@ export const GET_ORDER_TOOL = {
 /**
  * The get_order tool. `args` come from the model, `session` from the customer's login:
  * { tenantId, email }. `findOrder(orderId)` resolves to an order, or null.
- * Resolves to { id, status, totalCents, orderedOn } for the session customer's own order in the
- * session's shop, and to { error: "order not found" } for any other order.
+ * Resolves to { id, status, totalCents, orderedOn } for the session customer's own order, and to
+ * { error: "order not found" } for any other order.
  */
 export async function getOrder(args, session, findOrder) {
   throw new Error("Not built yet: milestone 2");

@@ -41,6 +41,7 @@ It returns `{ id, grade, reasons }`. `grade` is `"pass"`, `"fail"`, or `"ungrade
 | the judge result has no status | `"ungraded"` | `"no status"` |
 | its status isn't `"complete"` | `"ungraded"` | the status |
 | its text isn't JSON | `"ungraded"` | `"invalid JSON"` |
+| its JSON isn't an object, such as `null` | `"ungraded"` | `"invalid JSON"` |
 | its verdict isn't exactly `"pass"` or `"fail"` | `"ungraded"` | `` `unknown verdict: ${verdict}` `` |
 | the verdict is `"fail"` | `"fail"` | `` `judge: ${reason}` `` |
 | the verdict is `"pass"` | `"pass"` | none |
@@ -52,7 +53,7 @@ An answer hands off when its status is `"insufficient"`. The code checks' reason
 - `passed` and `total`: the passes, and every case
 - `passRate`: the passes divided by every case, rounded to 3 decimals
 - `ungraded`: the ungraded cases' ids, in the run's order, so you can rerun them
-- `broken`: the ids the baseline passed and this run grades `"fail"`
+- `broken`: the ids of the cases that got worse since the baseline
 
 ## The rules
 
@@ -67,7 +68,7 @@ An answer hands off when its status is `"insufficient"`. The code checks' reason
 
 ## The new case
 
-Since the baseline, the team added a case to the eval set, `kc-kettle-fault`, after a wrong answer about the kettle's warranty. It fails in this run. It isn't broken, though: the baseline never ran it, so it never passed it. It's a failure to fix. The check **leaves a case the baseline never had out of broken** tests it.
+Since the baseline, the team added a case to the eval set, `kc-kettle-fault`, after a wrong answer about the kettle's warranty. It fails in this run. Is it broken? The check **leaves a case the baseline never had out of broken** tests your answer.
 
 ## Run the checks
 
