@@ -30,8 +30,16 @@ export const PROPOSE_REFUND_TOOL = {
  * Resolves to { proposalId, status: "awaiting approval" }, or to { error } for an order that isn't
  * the session customer's, or an amount that isn't a whole number of cents from 1 to the order's total.
  */
-export async function proposeRefund(args, session, desk) {
-  throw new Error("Not built yet: milestone 5");
+export async function proposeRefund({ orderId, amountCents }, session, desk) {
+  if (!Number.isInteger(orderId)) return { error: "orderId must be an integer" };
+  const order = await desk.findOrder(orderId);
+  if (!order || order.tenantId !== session.tenantId || order.email !== session.email) return { error: "order not found" };
+  if (!Number.isInteger(amountCents) || amountCents < 1 || amountCents > order.totalCents) {
+    return { error: `amountCents must be a whole number from 1 to ${order.totalCents}` };
+  }
+  const proposalId = `p_${desk.proposals.size + 1}`;
+  desk.proposals.set(proposalId, { orderId, amountCents });
+  return { proposalId, status: "awaiting approval" };
 }
 
 /**
@@ -41,7 +49,12 @@ export async function proposeRefund(args, session, desk) {
  * idempotencyKey }, or { error: "no such proposal" }.
  */
 export function approve(proposalId, agent, now, desk) {
-  throw new Error("Not built yet: milestone 5");
+  const proposal = desk.proposals.get(proposalId);
+  if (!proposal) return { error: "no such proposal" };
+  const approval = { args: { ...proposal }, actorId: agent.actorId, expiresAt: now + APPROVAL_MS, idempotencyKey: randomUUID() };
+  const approvalId = `a_${desk.approvals.size + 1}`;
+  desk.approvals.set(approvalId, approval);
+  return { approvalId, ...approval };
 }
 
 /**
@@ -50,5 +63,12 @@ export function approve(proposalId, agent, now, desk) {
  * Resolves to the ledger's refund, { refundId, orderId, amountCents }, or to { error }.
  */
 export async function executeRefund(command, agent, now, desk) {
-  throw new Error("Not built yet: milestone 5");
+  const approval = desk.approvals.get(command.approvalId);
+  if (!approval) return { error: "no such approval" };
+  if (approval.actorId !== agent.actorId) return { error: "approved by another agent" };
+  if (now >= approval.expiresAt) return { error: "approval expired" };
+  if (command.args.orderId !== approval.args.orderId || command.args.amountCents !== approval.args.amountCents) {
+    return { error: "arguments differ from the approval" };
+  }
+  return desk.ledger.refund({ idempotencyKey: approval.idempotencyKey, ...approval.args });
 }

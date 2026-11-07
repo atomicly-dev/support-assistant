@@ -15,5 +15,10 @@ import { estimatedUsd, usageUsd } from "./lib/prices.mjs";
  * Returns { fromUsage, estimated }, the two sums kept apart.
  */
 export function traceTotals(spans) {
-  throw new Error("Not built yet: milestone 6");
+  const models = spans.filter((span) => span.name === "model");
+  const sum = (list, price) => list.reduce((total, span) => total + price(span), 0);
+  return {
+    fromUsage: sum(models.filter((span) => span.usage), (span) => usageUsd(span.usage)),
+    estimated: sum(models.filter((span) => !span.usage), estimatedUsd),
+  };
 }

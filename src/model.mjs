@@ -45,6 +45,13 @@ export function routeRequest(message) {
   };
 }
 
+const STATUSES = new Map([
+  ["stop", "complete"],
+  ["length", "cut_off"],
+  ["tool_calls", "tool_call"],
+  ["content_filter", "filtered"],
+]);
+
 /**
  * Reads a parsed Chat Completions response body.
  * Returns { status, text, usage }: status is "complete", "cut_off", "tool_call", "filtered", or
@@ -52,7 +59,12 @@ export function routeRequest(message) {
  * Throws for a finish_reason it doesn't know.
  */
 export function readCompletion(completion) {
-  throw new Error("Not built yet: milestone 1");
+  const { message, finish_reason } = completion.choices[0];
+  const usage = { input: completion.usage.prompt_tokens, output: completion.usage.completion_tokens };
+  if (message.refusal) return { status: "refused", text: null, usage };
+  const status = STATUSES.get(finish_reason);
+  if (!status) throw new Error(`Unknown finish_reason: ${finish_reason}`);
+  return { status, text: message.content, usage };
 }
 
 /**
@@ -61,5 +73,14 @@ export function readCompletion(completion) {
  * isn't complete, isn't JSON, or breaks the schema.
  */
 export function readRoute(result) {
-  throw new Error("Not built yet: milestone 1");
+  if (result.status !== "complete") return { ok: false, reason: result.status };
+  let data;
+  try {
+    data = JSON.parse(result.text);
+  } catch {
+    return { ok: false, reason: "invalid JSON" };
+  }
+  if (!CATEGORIES.includes(data?.category)) return { ok: false, reason: `unknown category: ${data?.category}` };
+  if (data.orderId !== null && !Number.isInteger(data.orderId)) return { ok: false, reason: "orderId must be an integer or null" };
+  return { ok: true, route: { category: data.category, orderId: data.orderId } };
 }

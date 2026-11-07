@@ -22,6 +22,9 @@ export function judgeRequest(question, answer, sources) {
   };
 }
 
+const round3 = (value) => Number(value.toFixed(3));
+const average = (values) => values.reduce((sum, value) => sum + value, 0) / values.length;
+
 /**
  * Scores retrieval on labeled questions.
  * `cases` are { id, relevant } with the ids of the chunks that answer each question, and
@@ -30,7 +33,33 @@ export function judgeRequest(question, answer, sources) {
  * relevant chunk are left out, so `questions` counts the ones that have one.
  */
 export function retrievalMetrics(cases, rankings, k) {
-  throw new Error("Not built yet: milestone 4");
+  const scored = cases
+    .filter((testCase) => testCase.relevant.length > 0)
+    .map((testCase) => {
+      const ranking = rankings[testCase.id] ?? [];
+      const found = testCase.relevant.filter((id) => ranking.slice(0, k).includes(id)).length;
+      const ranks = testCase.relevant.map((id) => ranking.indexOf(id) + 1).filter((rank) => rank > 0);
+      return { found, relevant: testCase.relevant.length, firstRank: ranks.length > 0 ? Math.min(...ranks) : null };
+    });
+  return {
+    questions: scored.length,
+    hitRate: round3(average(scored.map((q) => (q.found > 0 ? 1 : 0)))),
+    recall: round3(average(scored.map((q) => q.found / q.relevant))),
+    mrr: round3(average(scored.map((q) => (q.firstRank ? 1 / q.firstRank : 0)))),
+  };
+}
+
+function readVerdict(result) {
+  if (!result) return { grade: "ungraded", reason: "missing" };
+  if (result.status !== "complete") return { grade: "ungraded", reason: result.status ?? "no status" };
+  let verdict;
+  try {
+    verdict = JSON.parse(result.text);
+  } catch {
+    return { grade: "ungraded", reason: "invalid JSON" };
+  }
+  if (verdict?.verdict !== "pass" && verdict?.verdict !== "fail") return { grade: "ungraded", reason: `unknown verdict: ${verdict?.verdict}` };
+  return { grade: verdict.verdict, reason: verdict.reason };
 }
 
 /**
@@ -40,7 +69,17 @@ export function retrievalMetrics(cases, rankings, k) {
  * Returns { id, grade, reasons }: grade is "pass", "fail", or "ungraded".
  */
 export function gradeAnswer(testCase, answer, judgeResult) {
-  throw new Error("Not built yet: milestone 4");
+  const failures = [];
+  if (testCase.shouldHandOff !== (answer.status === "insufficient")) failures.push("wrong handoff");
+  const text = (answer.text ?? "").toLowerCase();
+  for (const phrase of testCase.mustSay) if (!text.includes(phrase)) failures.push(`missing "${phrase}"`);
+  for (const phrase of testCase.mustNotSay) if (text.includes(phrase)) failures.push(`says "${phrase}"`);
+  if (failures.length > 0) return { id: testCase.id, grade: "fail", reasons: failures };
+
+  const verdict = readVerdict(judgeResult);
+  if (verdict.grade === "ungraded") return { id: testCase.id, grade: "ungraded", reasons: [verdict.reason] };
+  if (verdict.grade === "fail") return { id: testCase.id, grade: "fail", reasons: [`judge: ${verdict.reason ?? "fail"}`] };
+  return { id: testCase.id, grade: "pass", reasons: [] };
 }
 
 /**
@@ -50,5 +89,13 @@ export function gradeAnswer(testCase, answer, judgeResult) {
  * baseline passed and this run failed.
  */
 export function summarize(grades, baseline = []) {
-  throw new Error("Not built yet: milestone 4");
+  const passed = grades.filter((g) => g.grade === "pass").length;
+  const passedBefore = new Set(baseline.filter((g) => g.grade === "pass").map((g) => g.id));
+  return {
+    passed,
+    total: grades.length,
+    passRate: round3(passed / grades.length),
+    ungraded: grades.filter((g) => g.grade === "ungraded").map((g) => g.id),
+    broken: grades.filter((g) => g.grade === "fail" && passedBefore.has(g.id)).map((g) => g.id),
+  };
 }

@@ -13,5 +13,16 @@
  * arrives, an error event makes it "failed", and usage stays null until a usage event arrives.
  */
 export async function readStream(events) {
-  throw new Error("Not built yet: milestone 2");
+  const answer = { status: "interrupted", text: "", usage: null, error: null };
+  for await (const event of events) {
+    if (event.type === "text") answer.text += event.text;
+    else if (event.type === "finish") answer.status = event.status;
+    else if (event.type === "usage") answer.usage = { input: event.input, output: event.output };
+    else if (event.type === "error") {
+      answer.status = "failed";
+      answer.error = event.message;
+      break;
+    } // any other type: skip it
+  }
+  return answer;
 }

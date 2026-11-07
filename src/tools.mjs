@@ -25,8 +25,11 @@ export const GET_ORDER_TOOL = {
  * Resolves to { id, status, totalCents, orderedOn } for the session customer's own order in the
  * session's shop, and to { error: "order not found" } for any other order.
  */
-export async function getOrder(args, session, findOrder) {
-  throw new Error("Not built yet: milestone 2");
+export async function getOrder({ orderId }, session, findOrder) {
+  if (!Number.isInteger(orderId)) return { error: "orderId must be an integer" };
+  const order = await findOrder(orderId);
+  if (!order || order.tenantId !== session.tenantId || order.email !== session.email) return { error: "order not found" };
+  return { id: order.id, status: order.status, totalCents: order.totalCents, orderedOn: order.orderedOn };
 }
 
 /**
@@ -38,5 +41,19 @@ export async function getOrder(args, session, findOrder) {
  * content is the result as a JSON string, or a JSON error the model can read.
  */
 export async function runToolCall(call, session, tools, log) {
-  throw new Error("Not built yet: milestone 2");
+  const reply = (content) => ({ role: "tool", tool_call_id: call.id, content: JSON.stringify(content) });
+  const tool = tools.get(call.function.name);
+  if (!tool) return reply({ error: `unknown tool: ${call.function.name}` });
+  let args;
+  try {
+    args = JSON.parse(call.function.arguments);
+  } catch {
+    return reply({ error: "arguments are not valid JSON" });
+  }
+  try {
+    return reply(await tool(args, session));
+  } catch (error) {
+    log(`${call.id} failed: ${error.message}`);
+    return reply({ error: "the tool failed, try again later" });
+  }
 }

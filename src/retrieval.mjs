@@ -45,7 +45,16 @@ export const evidenceBlock = (sources) => sources.map((s) => `<source id="${s.id
  * with the id breaking ties.
  */
 export async function searchChunks(db, session, embedding, limit = 5) {
-  throw new Error("Not built yet: milestone 3");
+  const { rows } = await db.query(
+    `SELECT c.id, c.content, c.embedding <=> $2::vector AS distance
+     FROM chunks c
+     JOIN documents d ON d.id = c.document_id AND d.version = c.version
+     WHERE c.tenant_id = $1 AND d.status = 'current'
+     ORDER BY distance, c.id
+     LIMIT $3`,
+    [session.tenantId, JSON.stringify(embedding), limit],
+  );
+  return rows;
 }
 
 /**
@@ -54,7 +63,12 @@ export async function searchChunks(db, session, embedding, limit = 5) {
  * ids that weren't sent.
  */
 export function checkCitations(answer, sources) {
-  throw new Error("Not built yet: milestone 3");
+  if (answer.status === "insufficient") return { ok: true };
+  if (answer.citations.length === 0) return { ok: false, reason: "no citations" };
+  const sent = new Set(sources.map((source) => source.id));
+  const unknown = answer.citations.filter((id) => !sent.has(id));
+  if (unknown.length > 0) return { ok: false, reason: `cited chunks that weren't sent: ${unknown.join(", ")}` };
+  return { ok: true };
 }
 
 /**
@@ -63,5 +77,28 @@ export function checkCitations(answer, sources) {
  * { status: "insufficient", text: HANDOFF, reason } when a person should answer instead.
  */
 export async function answerQuestion(question, rows, model) {
-  throw new Error("Not built yet: milestone 3");
+  const handoff = (reason) => ({ status: "insufficient", text: HANDOFF, reason });
+  const sources = rows.filter((row) => row.distance <= MAX_DISTANCE).slice(0, MAX_SOURCES);
+  if (sources.length === 0) return handoff("no sources");
+
+  const result = await model.complete({
+    messages: [
+      { role: "developer", content: ANSWER_INSTRUCTIONS },
+      { role: "user", content: `${evidenceBlock(sources)}\n<question>\n${question}\n</question>` },
+    ],
+    response_format: ANSWER_FORMAT,
+    max_completion_tokens: 400,
+  });
+  if (result.status !== "complete") return handoff(result.status);
+
+  let answer;
+  try {
+    answer = JSON.parse(result.text);
+  } catch {
+    return handoff("invalid JSON");
+  }
+  if (answer.status !== "answered") return handoff("insufficient");
+  const check = checkCitations(answer, sources);
+  if (!check.ok) return handoff(check.reason);
+  return { status: "answered", text: answer.text, citations: answer.citations };
 }
