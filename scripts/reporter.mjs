@@ -28,8 +28,8 @@ function describe(error) {
   // A check's own message says what came back and what should have. Node adds a diff after it.
   if (cause.code === "ERR_ASSERTION") return cause.generatedMessage ? cause.message : cause.message.split("\n")[0];
   if (NOT_BUILT.test(cause.message)) return cause.message;
-  // Any other error came from the code under test: show where it was thrown in src/.
-  const frame = cause.stack?.split("\n").find((line) => line.includes("/src/"));
+  // Any other error came from the code under test: show where your code in src/ threw it.
+  const frame = cause.stack?.split("\n").find((line) => line.includes("/src/") && !line.includes("/src/lib/"));
   return `${cause.name}: ${cause.message}${frame ? `\n${frame.trim()}` : ""}`;
 }
 
