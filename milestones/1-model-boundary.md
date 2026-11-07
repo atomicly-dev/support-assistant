@@ -39,7 +39,7 @@ It returns a result, `{ status, text, usage }`. `usage` is `{ input, output }`, 
 | --- | --- |
 | Its `status` isn't `"complete"` | the status, such as `"cut_off"` |
 | Its `text` isn't JSON | `"invalid JSON"` |
-| Its JSON isn't an object, such as `null` | a reason you pick |
+| Its JSON isn't a plain object, such as `null` or a list | a reason you pick |
 | Its `category` isn't one of `CATEGORIES` | `` `unknown category: ${category}` `` |
 | Its `orderId` isn't an integer or `null` | `"orderId must be an integer or null"` |
 
