@@ -45,7 +45,7 @@ Two things went wrong in the first version. A dropped connection ended the strea
 | --- | --- |
 | The tool ran | the tool's result |
 | Its name isn't in `tools` | `{"error":"unknown tool: <name>"}` |
-| Its arguments aren't JSON | `{"error":"..."}`, with a message you choose |
+| Its arguments aren't JSON | `{"error":"arguments are not valid JSON"}` |
 | The tool threw | `{"error":"..."}`, with a safe message you pick |
 
 `GET_ORDER_TOOL`, the tool's definition for the request, is already in the file. It has no customer argument.
