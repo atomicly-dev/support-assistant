@@ -16,7 +16,7 @@ All three functions go in `src/refunds.mjs`. The file already has `APPROVAL_MS`,
 
 - `findOrder(orderId)`, which resolves to an order, `{ id, tenantId, email, status, totalCents, orderedOn }`, or to `null`
 - `proposals`, an empty `Map` for the proposals: a proposal's id to `{ orderId, amountCents }`
-- `approvals`, an empty `Map` for the approvals: an approval's id to `{ proposalId, args, actorId, expiresAt, idempotencyKey }`
+- `approvals`, an empty `Map` for the approvals: an approval's id to `{ args, actorId, expiresAt, idempotencyKey }`, and anything else you store
 - `ledger`, a fake ledger. `ledger.refund({ idempotencyKey, orderId, amountCents })` pays a refund and resolves to `{ refundId, orderId, amountCents }`. For a key it has seen, it resolves to the first refund and pays nothing new. `ledger.refunds` holds what it paid.
 
 **`proposeRefund(args, session, desk)`** is the model's only refund tool. `args` come from the model, such as `{ orderId: 1040, amountCents: 3500 }`, and `session` is `{ tenantId, email }`, from the customer's login. It resolves to:
@@ -32,7 +32,7 @@ All three functions go in `src/refunds.mjs`. The file already has `APPROVAL_MS`,
 - `expiresAt`: `now + APPROVAL_MS`
 - `idempotencyKey`: a random string, such as `randomUUID()` from `node:crypto`
 
-For a proposal it can't approve, it returns `{ error: "no such proposal" }` or `{ error: "already approved" }`.
+For an id it doesn't know, it returns `{ error: "no such proposal" }`.
 
 **`executeRefund(command, agent, now, desk)`** pays an approved refund. `command` is `{ approvalId, args: { orderId, amountCents } }`. It resolves to the ledger's refund, or to an error:
 
@@ -58,7 +58,7 @@ For a proposal it can't approve, it returns `{ error: "no such proposal" }` or `
 
 ## The new case
 
-Priya's click on "Approve" went through twice, and then Sam approved the same proposal too. Each approval would get its own key, so the ledger would pay the same refund three times. One proposal gets one approval. The check **approves each proposal once, so a double approval can't pay twice** tests it.
+Priya's click on "Approve" went through twice, and then Sam approved the same proposal too. Each of them ran the command they got. How many refunds did the ledger pay, and why didn't the idempotency key stop them? Make the ledger pay once: the second and third approvals fail, with an error you choose. The check **approves each proposal once, so a double approval can't pay twice** replays the clicks.
 
 ## Run the checks
 

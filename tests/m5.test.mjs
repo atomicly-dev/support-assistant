@@ -157,10 +157,10 @@ test("approves each proposal once, so a double approval can't pay twice", async 
   const approvals = [approve(proposal?.proposalId, priya, NOW, desk), approve(proposal?.proposalId, priya, NOW + 1000, desk), approve(proposal?.proposalId, sam, NOW + 2000, desk)];
   assert.ok(approvals[0]?.approvalId, `approve returned ${show(approvals[0])} for the first approval of ${proposal?.proposalId}. It should approve it.`);
   for (const [i, who] of [[1, "Priya's second click"], [2, "Sam's approval after Priya's"]]) {
-    assert.deepEqual(
-      approvals[i],
-      { error: "already approved" },
-      `approve returned ${show(approvals[i])} for ${who}, on a proposal Priya already approved. Each approval gets its own key, so a second one would pay the same refund again: it should return { error: 'already approved' }.`,
+    const refused = approvals[i];
+    assert.ok(
+      typeof refused?.error === "string" && refused.error.trim() !== "" && Object.keys(refused).length === 1,
+      `approve returned ${show(refused)} for ${who}, on a proposal Priya already approved. Each approval gets its own idempotency key, so the ledger can't tell a second approval from a new refund, and pays again. One proposal gets one approval: it should return { error }, with a message you choose.`,
     );
   }
   for (const [approval, agent] of [[approvals[0], priya], [approvals[1], priya], [approvals[2], sam]]) {

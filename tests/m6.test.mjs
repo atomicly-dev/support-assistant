@@ -13,6 +13,11 @@ const subscriber = { id: "pia.lund@example.com", plan: "subscriber" }; // no per
 const request = { messages: [{ role: "user", content: "Where is order 1042?" }], max_completion_tokens: 400 };
 const complete = { status: "complete", text: "Order 1042 was delivered on October 2.", usage: { input: 1000, output: 300 } }; // 13 cents
 
+// "the subscriber's spend is 15 cents", or "the subscriber has no spend recorded", for a message.
+const spend = (budget, user, who) => (budget.users.get(user.id) === undefined ? `${who} has no spend recorded` : `${who}'s spend is ${show(budget.users.get(user.id))} cents`);
+// A reason of the learner's choice: any text that isn't empty.
+const isReason = (reason) => typeof reason === "string" && reason.trim() !== "";
+
 test("reserves against the user's plan limit, then the global limit", () => {
   const budget = createBudget({ globalCents: 100 });
   const first = [reserve(budget, trial, 15), reserve(budget, trial, 15)];
@@ -62,7 +67,7 @@ test("lets only the calls that fit reach the model when three arrive at once", a
     ["complete", "complete", "over_budget"],
     `callWithBudget's results had the statuses ${show(statuses)}. The call that doesn't fit should return { status: 'over_budget', text: null, usage: null, reason: 'user limit' }.`,
   );
-  assert.equal(budget.users.get(trial.id), 46, `After the calls, the trial user's spend is ${show(budget.users.get(trial.id))} cents. Settle each call to its usage, 13 cents: 20 + 13 + 13 = 46.`);
+  assert.equal(budget.users.get(trial.id), 46, `After the calls, ${spend(budget, trial, "the trial user")}. Settle each call to its usage, 13 cents: 20 + 13 + 13 = 46.`);
 });
 
 test("settles to the usage, or keeps the reservation when usage never arrives", () => {
@@ -79,7 +84,7 @@ test("settles to the usage, or keeps the reservation when usage never arrives", 
       ? "A real 0 charges 0: only missing usage, null, keeps the reservation."
       : "The provider may have billed a call without usage, so null keeps the reservation as the charge.";
   assert.deepEqual(charged, expected, `settle returned ${show(charged)} for usage of 9 cents, missing usage (null), and a real 0. ${why} It should return ${show(expected)}.`);
-  assert.equal(budget.users.get(subscriber.id), 24, `The user's spend is ${show(budget.users.get(subscriber.id))} cents after those settles. It should be 9 + 15 + 0 = 24.`);
+  assert.equal(budget.users.get(subscriber.id), 24, `After those settles, ${spend(budget, subscriber, "the subscriber")}. It should be 9 + 15 + 0 = 24 cents.`);
   assert.equal(budget.total, 24, `budget.total is ${show(budget.total)} cents after those settles. It should be 24 too.`);
 });
 
@@ -88,11 +93,12 @@ test("charges nothing more for a settle sent twice", () => {
   const { id } = reserve(budget, trial, 15) ?? {};
   settle(budget, id, 9);
   const again = settle(budget, id, 9);
-  assert.deepEqual(again, { ok: false, reason: "no such reservation" }, `settle returned ${show(again)} for a reservation it already settled. It should return { ok: false, reason: 'no such reservation' }.`);
-  assert.equal(budget.users.get(trial.id), 9, `The trial user's spend is ${show(budget.users.get(trial.id))} cents after the same settle twice. It should stay 9.`);
+  assert.ok(again?.ok === false && isReason(again.reason), `settle returned ${show(again)} for a reservation it already settled. It should return { ok: false, reason }, with a reason you choose.`);
+  assert.equal(budget.users.get(trial.id), 9, `After the same settle twice, ${spend(budget, trial, "the trial user")}. It should stay 9 cents.`);
   assert.equal(budget.total, 9, `budget.total is ${show(budget.total)} cents after the same settle twice. It should stay 9.`);
   const never = settle(budget, "r-404", 5);
-  assert.deepEqual(never, { ok: false, reason: "no such reservation" }, `settle returned ${show(never)} for an id reserve never returned. It should return { ok: false, reason: 'no such reservation' }.`);
+  assert.ok(never?.ok === false && isReason(never.reason), `settle returned ${show(never)} for an id reserve never returned. It should return { ok: false, reason }, with a reason you choose.`);
+  assert.equal(budget.total, 9, `budget.total is ${show(budget.total)} cents after a settle of an id reserve never returned. It should stay 9.`);
 });
 
 test("makes no call over the budget, and charges a call without usage its reservation", async () => {
@@ -110,11 +116,11 @@ test("makes no call over the budget, and charges a call without usage its reserv
   assert.equal(
     budget.users.get(subscriber.id),
     15,
-    `After a call whose usage never arrived, the subscriber's spend is ${show(budget.users.get(subscriber.id))} cents. The provider may have billed it, so it keeps its 15-cent reservation.`,
+    `After a call whose usage never arrived, ${spend(budget, subscriber, "the subscriber")}. The provider may have billed it, so it keeps its 15-cent reservation.`,
   );
 });
 
-test("keeps a failed call's reservation, and passes its error on", async () => {
+test("settles a failed call to its reservation, and passes its error on", async () => {
   // The new case: the provider took too long, the client gave up, and model.complete threw.
   const budget = createBudget();
   const timeout = new Error("The operation was aborted due to timeout");
@@ -129,7 +135,12 @@ test("keeps a failed call's reservation, and passes its error on", async () => {
   assert.deepEqual(
     [budget.users.get(subscriber.id), budget.total],
     [15, 15],
-    `After a call that threw, the subscriber's spend is ${show(budget.users.get(subscriber.id))} cents and budget.total is ${show(budget.total)}. The request may have reached the provider, and the reservation is the most it can cost: both should be 15.`,
+    `After a call that threw, ${spend(budget, subscriber, "the subscriber")}, and budget.total is ${show(budget.total)} cents. The request may have reached the provider, and the reservation is the most it can cost: both should be 15.`,
+  );
+  assert.equal(
+    budget.reservations.size,
+    0,
+    "After a call that threw, its reservation is still pending in budget.reservations. Settle it on the error path too, with null, so it's charged once and not left open.",
   );
 });
 

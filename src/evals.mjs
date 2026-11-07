@@ -86,8 +86,8 @@ export function gradeAnswer(testCase, answer, judgeResult) {
 /**
  * Sums up a run's grades, and compares them with the baseline's, an earlier run's grades.
  * Returns { passed, total, passRate, ungraded, broken }: passRate counts an ungraded case as not
- * passed, rounded to 3 decimals, `ungraded` lists those cases' ids, and `broken` lists the ids the
- * baseline passed and this run failed.
+ * passed, rounded to 3 decimals, `ungraded` lists those cases' ids, and `broken` lists the ids of
+ * the cases that got worse since the baseline.
  */
 export function summarize(grades, baseline = []) {
   const passed = grades.filter((g) => g.grade === "pass").length;

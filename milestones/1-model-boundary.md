@@ -39,7 +39,6 @@ It returns a result, `{ status, text, usage }`. `usage` is `{ input, output }`, 
 | --- | --- |
 | Its `status` isn't `"complete"` | the status, such as `"cut_off"` |
 | Its `text` isn't JSON | `"invalid JSON"` |
-| Its JSON isn't a plain object, such as `null` or a list | a reason you pick |
 | Its `category` isn't one of `CATEGORIES` | `` `unknown category: ${category}` `` |
 | Its `orderId` isn't an integer or `null` | `"orderId must be an integer or null"` |
 
@@ -50,13 +49,16 @@ It returns a result, `{ status, text, usage }`. `usage` is `{ input, output }`, 
 - A `finish_reason` that isn't in the table throws an error that names it.
 - Only a complete result's text becomes a route, even when another status's text parses.
 - `readRoute` never throws for a bad reply. It returns the reason, so the assistant can hand the message to a person.
-- A route holds only `category` and `orderId`, the fields you checked.
 
 ## The new case
 
-For an hour, a deploy sent the routing request without `response_format`. The replies were still JSON, but not always a route: `null` for an empty message, a list with the route inside it, and a route with an extra `note` field. The router crashed on the `null`.
+For an hour, a deploy sent the routing request without `response_format`. The replies were still JSON, but not always a route:
 
-`readRoute` turns each of them into a reason, or into a route with only the checked fields. The check **checks the shape of JSON the schema would have stopped, such as null** replays them.
+- `null`, for an empty message, which crashed the first version of the router
+- a list with the route inside it
+- the right route, with an extra `note` field, which the next step showed to the customer
+
+What should `readRoute` return for each of them? The check **checks the shape of JSON the schema would have stopped, such as null** replays them.
 
 ## Run the checks
 
@@ -89,7 +91,7 @@ Open them one at a time, when you're stuck.
 <summary>Hint 2: the approach</summary>
 
 - `readCompletion`: look for the refusal before you look at `finish_reason`, because `finish_reason` can't show one. Then turn `finish_reason` into a status with a lookup table, and throw when the table has no entry.
-- `readRoute`: return early for a status that isn't complete, and parse inside a `try`. Then check the parsed value like a request body: is it an object, is its category one you know, is its `orderId` an integer or `null`? Build the route from the two fields you checked.
+- `readRoute`: return early for a status that isn't complete, and parse inside a `try`. Then check the parsed value like a request body: is it an object, is its category one you know, is its `orderId` an integer or `null`? Build the route from the two fields you checked, and give anything that isn't a route a reason you choose.
 
 </details>
 

@@ -45,7 +45,7 @@ export async function proposeRefund({ orderId, amountCents }, session, desk) {
  * A support agent approves one proposal. `agent` comes from the agent's login: { actorId }, and
  * `now` is the time in milliseconds.
  * Stores the approval in desk.approvals and returns { approvalId, args, actorId, expiresAt,
- * idempotencyKey }, or { error } for a proposal it doesn't know or already approved.
+ * idempotencyKey }, or { error: "no such proposal" }.
  */
 export function approve(proposalId, agent, now, desk) {
   const proposal = desk.proposals.get(proposalId);

@@ -26,7 +26,7 @@ It resolves to at most `limit` rows `{ id, content, distance }`, where `distance
 | --- | --- |
 | `status` is `"insufficient"` | `{ ok: true }` |
 | it cites only the sources' ids | `{ ok: true }` |
-| it cites nothing | `{ ok: false, reason: "no citations" }` |
+| it cites nothing | `{ ok: false, reason }`, with a reason you choose |
 | it cites ids that weren't sent | `{ ok: false, reason: "cited chunks that weren't sent: <ids>" }` |
 
 `<ids>` is every unknown id, in the order of the citations, joined with `, `.
@@ -44,6 +44,7 @@ It resolves to at most `limit` rows `{ id, content, distance }`, where `distance
 | no row is a source | `"no sources"` |
 | the result isn't complete | its status, such as `"refused"` |
 | its text isn't JSON | `"invalid JSON"` |
+| its JSON isn't an object, such as `null` | `"invalid JSON"` |
 | the reply's own status is `"insufficient"` | `"insufficient"` |
 | `checkCitations` fails | `checkCitations`' reason |
 
@@ -59,9 +60,9 @@ It resolves to at most `limit` rows `{ id, content, distance }`, where `distance
 
 ## The new case
 
-Last week, Kettle & Co published version 3 of its refund policy with a typo: 3 days instead of 30. It rolled back to version 2 the same day. Version 3 is still in the table, `'stale'`, and nearer to the question than version 2. The newest version isn't always the current one.
+Last week, Kettle & Co published version 3 of its refund policy with a typo: 3 days instead of 30. It rolled back to version 2 the same day. Version 3 is still in the table, `'stale'`, and nearer to the question than version 2.
 
-The check **leaves out a newer version the shop rolled back** adds version 3 in a transaction, and rolls it back after the search. The search's first row should still be version 2's.
+Which chunks should the refund question find now? The check **leaves out a newer version the shop rolled back** adds version 3 in a transaction, searches, and rolls it back.
 
 ## Run the checks
 
@@ -83,7 +84,7 @@ The search checks run your query against the real embeddings. Two of them add ro
 - sends only the chunks within 0.55, at most 4, each with its id
 - asks with the instructions, the answer schema, a token limit, and the question in its tags
 - rejects an answer with no citations, or one that cites a chunk that wasn't sent
-- hands off a reply that isn't complete, isn't JSON, or says the sources don't answer
+- hands off a reply that isn't complete, isn't a JSON object, or says the sources don't answer
 
 To try your query by hand, connect with `docker compose exec postgres psql -U postgres support`.
 

@@ -4,7 +4,7 @@ Lessons: [Rate limiting by cost: budget the whole request](https://atomicly.dev/
 
 ## The situation
 
-A trial user gets 50 cents of model calls a day. One of them, with 20 cents spent, sends three questions from three browser tabs at once. Each request checks the spend, calls the model, then records the cost, so all three pass the check before any of them records anything.
+A trial user gets 50 cents of model calls a day. One of them, with 20 cents spent, sends three questions from three browser tabs at once. Each request checks the spend, calls the model, then records the cost, so all three pass the check before any of them records anything. What has to happen in the same step as the check, so the third request sees the first two?
 
 Then a deploy doubled the assistant's cost, and every request still returned `200`. The dashboard added up only the costs from usage, so a call whose stream broke before its usage arrived showed no cost.
 
@@ -29,7 +29,7 @@ Then a deploy doubled the assistant's cost, and every request still returned `20
 
 **`reserve(budget, user, cents)`** reserves one call's cost before the call. It returns `{ ok: true, id }`, `{ ok: false, reason: "user limit" }`, or `{ ok: false, reason: "global limit" }`.
 
-**`settle(budget, id, actualCents)`** replaces a reservation with what the call cost. `actualCents` is `null` when the usage never arrived. It returns `{ ok: true, charged }`, or `{ ok: false, reason: "no such reservation" }`.
+**`settle(budget, id, actualCents)`** replaces a reservation with what the call cost. `actualCents` is `null` when the usage never arrived. It returns `{ ok: true, charged }`, or `{ ok: false, reason }`, with a reason you choose, for an id it already settled or never made.
 
 **`callWithBudget(budget, user, request, model)`** makes one `model.complete(request)` call within the budget. It resolves to the model's result, or to `{ status: "over_budget", text: null, usage: null, reason }`, with the reservation's reason.
 
@@ -55,7 +55,7 @@ The budget lives in memory, in one Node process. With several processes, keep th
 
 ## The new case
 
-The provider took too long, and the client gave up: `model.complete` threw a timeout error. The request may have reached the provider, which may bill it. So the call keeps its reservation as the charge, and the error goes on to the caller. The check **keeps a failed call's reservation, and passes its error on** tests it.
+The provider took too long, and the client gave up: `model.complete` threw a timeout error. The request may have reached the provider, which may bill it. So the call settles its reservation as the charge, with `settle(budget, id, null)`, and the error goes on to the caller. No reservation stays pending. The check **settles a failed call to its reservation, and passes its error on** tests it.
 
 ## Run the checks
 
@@ -70,7 +70,7 @@ The checks use the fake model from `src/lib/fake-model.mjs`: each call costs at 
 - settles to the usage, or keeps the reservation when usage never arrives
 - charges nothing more for a settle sent twice
 - makes no call over the budget, and charges a call without usage its reservation
-- keeps a failed call's reservation, and passes its error on
+- settles a failed call to its reservation, and passes its error on
 - keeps a trace's cost from usage apart from its estimated cost
 - counts only model spans, so a trace without them costs nothing
 
@@ -89,7 +89,7 @@ Open them one at a time, when you're stuck.
 <details>
 <summary>Hint 2: the approach</summary>
 
-- `reserve`: check both limits and record the reservation in the same step, with no `await` in between. Why does the concurrent check pass only then?
+- `reserve`: check both limits and record the reservation in the same step, with no `await` in between.
 - `settle`: find the reservation and remove it, then move the user's spend and the total by the difference between the charge and the reservation.
 - `callWithBudget`: reserve, then call the model inside a `try`. Settle on both paths, the result's and the error's.
 - `traceTotals`: keep the model spans, split them by whether their usage arrived, and sum each group with its own price.

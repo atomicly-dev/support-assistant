@@ -125,6 +125,7 @@ test("grades a judge result without a clear verdict as ungraded, never as a pass
     ['the verdict "PASS"', graded("dw-desk-lamp"), { id: "dw-desk-lamp", grade: "ungraded", reasons: ["unknown verdict: PASS"] }],
     ["no judge result at all", graded("kc-billed-twice"), { id: "kc-billed-twice", grade: "ungraded", reasons: ["missing"] }],
     ['the judge text "Pass", which isn\'t JSON', grade(window, answer, judged("Pass")), { id: "kc-refund-window", grade: "ungraded", reasons: ["invalid JSON"] }],
+    ['the judge text "null", JSON that isn\'t an object', grade(window, answer, judged("null")), { id: "kc-refund-window", grade: "ungraded", reasons: ["invalid JSON"] }],
     ["a judge result with no status", grade(window, answer, { text: '{"verdict":"pass"}' }), { id: "kc-refund-window", grade: "ungraded", reasons: ["no status"] }],
   ];
   for (const [label, result, want] of cases) {
