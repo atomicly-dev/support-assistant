@@ -1,0 +1,91 @@
+{
+  "about": "The labeled questions of the ai-support data, and each one's chunks ranked by the course's vector search: its shop's current chunks, nearest first. Recorded from the database npm run setup loads.",
+  "cases": [
+    {
+      "id": "q-billed-twice",
+      "shop": "kettleandco",
+      "question": "Why was my card billed two times for one purchase?",
+      "relevant": ["kc-payment-v1-2"]
+    },
+    {
+      "id": "q-cracked-mug",
+      "shop": "kettleandco",
+      "question": "My mug arrived cracked. What are my options?",
+      "relevant": ["kc-damaged-items-v1-1", "kc-damaged-items-v1-2", "kc-refund-policy-v2-2"]
+    },
+    {
+      "id": "q-dw-desk-lamp",
+      "shop": "deskworks",
+      "question": "How long do I have to return a desk lamp for a refund?",
+      "relevant": ["dw-refund-policy-v1-1"]
+    },
+    {
+      "id": "q-gift-cards",
+      "shop": "kettleandco",
+      "question": "How do gift cards work?",
+      "relevant": ["kc-gift-cards-v1-1", "kc-gift-cards-v1-2", "kc-gift-cards-v1-3"]
+    },
+    {
+      "id": "q-kettle-fault",
+      "shop": "kettleandco",
+      "question": "My kettle stopped heating after eight months.",
+      "relevant": ["kc-warranty-v1-1", "kc-warranty-v1-2"]
+    },
+    {
+      "id": "q-money-back",
+      "shop": "kettleandco",
+      "question": "Can I get my money back on something I purchased last week?",
+      "relevant": ["kc-refund-policy-v2-1", "kc-refund-policy-v2-2"]
+    },
+    {
+      "id": "q-no-answer",
+      "shop": "kettleandco",
+      "question": "Do you match a lower price from another store?",
+      "relevant": []
+    },
+    {
+      "id": "q-other-tenant",
+      "shop": "kettleandco",
+      "question": "Can I send back an office chair after I've put it together?",
+      "relevant": []
+    },
+    {
+      "id": "q-parcel-never-came",
+      "shop": "kettleandco",
+      "question": "The package I've been waiting for never showed up.",
+      "relevant": ["kc-shipping-v1-3"]
+    },
+    {
+      "id": "q-refund-window",
+      "shop": "kettleandco",
+      "question": "How many days do I have to ask for a refund?",
+      "relevant": ["kc-refund-policy-v2-1"]
+    },
+    {
+      "id": "q-sku",
+      "shop": "kettleandco",
+      "question": "KB-204",
+      "relevant": ["kc-warranty-v1-3"]
+    },
+    {
+      "id": "q-white-crust",
+      "shop": "kettleandco",
+      "question": "How do I get the white crust out of my kettle?",
+      "relevant": ["kc-kettle-care-v1-1"]
+    }
+  ],
+  "rankings": {
+    "q-billed-twice": ["kc-payment-v1-2", "kc-gift-cards-v1-2", "kc-payment-v1-1", "kc-gift-cards-v1-1", "kc-shipping-v1-1", "kc-kettle-care-v1-2", "kc-account-v1-2", "kc-returns-v1-1", "kc-gift-cards-v1-3", "kc-shipping-v1-2", "kc-damaged-items-v1-1", "kc-shipping-v1-3", "kc-refund-policy-v2-2", "kc-damaged-items-v1-2", "kc-warranty-v1-2", "kc-refund-policy-v2-3", "kc-account-v1-1", "kc-warranty-v1-1", "kc-refund-policy-v2-1", "kc-warranty-v1-3", "kc-kettle-care-v1-1", "kc-returns-v1-2", "kc-returns-v1-3"],
+    "q-cracked-mug": ["kc-damaged-items-v1-2", "kc-returns-v1-2", "kc-warranty-v1-3", "kc-damaged-items-v1-1", "kc-warranty-v1-2", "kc-warranty-v1-1", "kc-shipping-v1-3", "kc-refund-policy-v2-2", "kc-refund-policy-v2-3", "kc-kettle-care-v1-1", "kc-kettle-care-v1-2", "kc-returns-v1-3", "kc-refund-policy-v2-1", "kc-gift-cards-v1-3", "kc-account-v1-2", "kc-payment-v1-1", "kc-returns-v1-1", "kc-account-v1-1", "kc-payment-v1-2", "kc-shipping-v1-1", "kc-gift-cards-v1-2", "kc-gift-cards-v1-1", "kc-shipping-v1-2"],
+    "q-dw-desk-lamp": ["dw-refund-policy-v1-1", "dw-assembled-furniture-v1-1", "dw-assembled-furniture-v1-2", "dw-refund-policy-v1-2", "dw-shipping-v1-1", "dw-shipping-v1-2"],
+    "q-gift-cards": ["kc-gift-cards-v1-3", "kc-gift-cards-v1-1", "kc-gift-cards-v1-2", "kc-payment-v1-1", "kc-refund-policy-v2-3", "kc-returns-v1-1", "kc-returns-v1-3", "kc-refund-policy-v2-1", "kc-damaged-items-v1-2", "kc-damaged-items-v1-1", "kc-refund-policy-v2-2", "kc-payment-v1-2", "kc-shipping-v1-1", "kc-shipping-v1-2", "kc-kettle-care-v1-2", "kc-returns-v1-2", "kc-shipping-v1-3", "kc-warranty-v1-2", "kc-warranty-v1-1", "kc-account-v1-2", "kc-warranty-v1-3", "kc-kettle-care-v1-1", "kc-account-v1-1"],
+    "q-kettle-fault": ["kc-warranty-v1-1", "kc-warranty-v1-2", "kc-kettle-care-v1-1", "kc-warranty-v1-3", "kc-kettle-care-v1-2", "kc-returns-v1-3", "kc-shipping-v1-3", "kc-damaged-items-v1-2", "kc-gift-cards-v1-3", "kc-damaged-items-v1-1", "kc-refund-policy-v2-1", "kc-refund-policy-v2-3", "kc-refund-policy-v2-2", "kc-account-v1-1", "kc-payment-v1-2", "kc-account-v1-2", "kc-returns-v1-2", "kc-gift-cards-v1-1", "kc-gift-cards-v1-2", "kc-returns-v1-1", "kc-shipping-v1-1", "kc-payment-v1-1", "kc-shipping-v1-2"],
+    "q-money-back": ["kc-refund-policy-v2-2", "kc-refund-policy-v2-1", "kc-payment-v1-2", "kc-shipping-v1-3", "kc-refund-policy-v2-3", "kc-damaged-items-v1-2", "kc-damaged-items-v1-1", "kc-warranty-v1-2", "kc-returns-v1-3", "kc-returns-v1-1", "kc-gift-cards-v1-3", "kc-payment-v1-1", "kc-warranty-v1-1", "kc-warranty-v1-3", "kc-gift-cards-v1-2", "kc-kettle-care-v1-2", "kc-returns-v1-2", "kc-gift-cards-v1-1", "kc-account-v1-1", "kc-account-v1-2", "kc-shipping-v1-2", "kc-shipping-v1-1", "kc-kettle-care-v1-1"],
+    "q-no-answer": ["kc-gift-cards-v1-2", "kc-damaged-items-v1-2", "kc-gift-cards-v1-1", "kc-payment-v1-2", "kc-returns-v1-3", "kc-returns-v1-1", "kc-kettle-care-v1-2", "kc-payment-v1-1", "kc-account-v1-2", "kc-refund-policy-v2-2", "kc-warranty-v1-1", "kc-gift-cards-v1-3", "kc-refund-policy-v2-3", "kc-damaged-items-v1-1", "kc-shipping-v1-1", "kc-warranty-v1-3", "kc-returns-v1-2", "kc-warranty-v1-2", "kc-shipping-v1-2", "kc-refund-policy-v2-1", "kc-shipping-v1-3", "kc-kettle-care-v1-1", "kc-account-v1-1"],
+    "q-other-tenant": ["kc-returns-v1-3", "kc-damaged-items-v1-2", "kc-returns-v1-2", "kc-damaged-items-v1-1", "kc-refund-policy-v2-1", "kc-warranty-v1-2", "kc-returns-v1-1", "kc-shipping-v1-3", "kc-warranty-v1-1", "kc-refund-policy-v2-2", "kc-kettle-care-v1-2", "kc-refund-policy-v2-3", "kc-payment-v1-1", "kc-warranty-v1-3", "kc-shipping-v1-1", "kc-account-v1-2", "kc-gift-cards-v1-3", "kc-kettle-care-v1-1", "kc-account-v1-1", "kc-payment-v1-2", "kc-shipping-v1-2", "kc-gift-cards-v1-2", "kc-gift-cards-v1-1"],
+    "q-parcel-never-came": ["kc-payment-v1-2", "kc-shipping-v1-2", "kc-shipping-v1-3", "kc-shipping-v1-1", "kc-gift-cards-v1-1", "kc-kettle-care-v1-2", "kc-refund-policy-v2-1", "kc-damaged-items-v1-1", "kc-warranty-v1-2", "kc-refund-policy-v2-2", "kc-gift-cards-v1-3", "kc-returns-v1-2", "kc-damaged-items-v1-2", "kc-refund-policy-v2-3", "kc-payment-v1-1", "kc-account-v1-2", "kc-gift-cards-v1-2", "kc-warranty-v1-1", "kc-warranty-v1-3", "kc-returns-v1-1", "kc-returns-v1-3", "kc-account-v1-1", "kc-kettle-care-v1-1"],
+    "q-refund-window": ["kc-refund-policy-v2-1", "kc-refund-policy-v2-2", "kc-warranty-v1-2", "kc-gift-cards-v1-3", "kc-refund-policy-v2-3", "kc-payment-v1-2", "kc-damaged-items-v1-1", "kc-returns-v1-1", "kc-damaged-items-v1-2", "kc-shipping-v1-3", "kc-returns-v1-3", "kc-warranty-v1-1", "kc-gift-cards-v1-1", "kc-returns-v1-2", "kc-kettle-care-v1-1", "kc-payment-v1-1", "kc-warranty-v1-3", "kc-gift-cards-v1-2", "kc-kettle-care-v1-2", "kc-account-v1-1", "kc-shipping-v1-1", "kc-account-v1-2", "kc-shipping-v1-2"],
+    "q-sku": ["kc-warranty-v1-3", "kc-kettle-care-v1-2", "kc-gift-cards-v1-2", "kc-shipping-v1-1", "kc-payment-v1-1", "kc-payment-v1-2", "kc-returns-v1-2", "kc-returns-v1-3", "kc-warranty-v1-2", "kc-damaged-items-v1-1", "kc-kettle-care-v1-1", "kc-shipping-v1-3", "kc-warranty-v1-1", "kc-refund-policy-v2-3", "kc-gift-cards-v1-3", "kc-gift-cards-v1-1", "kc-account-v1-2", "kc-damaged-items-v1-2", "kc-shipping-v1-2", "kc-returns-v1-1", "kc-refund-policy-v2-2", "kc-refund-policy-v2-1", "kc-account-v1-1"],
+    "q-white-crust": ["kc-kettle-care-v1-1", "kc-warranty-v1-1", "kc-warranty-v1-3", "kc-warranty-v1-2", "kc-kettle-care-v1-2", "kc-returns-v1-3", "kc-returns-v1-2", "kc-damaged-items-v1-2", "kc-damaged-items-v1-1", "kc-refund-policy-v2-3", "kc-account-v1-1", "kc-shipping-v1-3", "kc-refund-policy-v2-1", "kc-returns-v1-1", "kc-payment-v1-2", "kc-refund-policy-v2-2", "kc-account-v1-2", "kc-gift-cards-v1-1", "kc-gift-cards-v1-2", "kc-gift-cards-v1-3", "kc-payment-v1-1", "kc-shipping-v1-2", "kc-shipping-v1-1"]
+  }
+}

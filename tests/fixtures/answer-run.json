@@ -1,0 +1,29 @@
+{
+  "about": "A made-up run of the answer eval on evals/answer-cases.json, not recorded from a real model: each case's answer from the assistant, and the judge's model result. kc-billed-twice has no judge result, like a judge call that timed out and stored nothing. baseline holds an earlier run's grades, the score to beat.",
+  "answers": {
+    "kc-refund-window": { "status": "answered", "text": "You have 30 days from delivery to ask for a refund.", "citations": ["kc-refund-policy-v2-1"] },
+    "kc-used-knife": { "status": "answered", "text": "Of course! We'll send you a full refund for the knife right away.", "citations": ["kc-returns-v1-3"] },
+    "kc-price-match": { "status": "insufficient", "text": "A person from our support team will reply soon.", "reason": "no sources" },
+    "kc-cracked-mug": { "status": "answered", "text": "Send us a photo from the Orders page within 7 days of delivery, and we'll send a free replacement.", "citations": ["kc-damaged-items-v1-1", "kc-damaged-items-v1-2"] },
+    "kc-office-chair": { "status": "answered", "text": "Yes, office chairs can be returned within 30 days, even after assembly.", "citations": ["kc-returns-v1-3"] },
+    "kc-billed-twice": { "status": "answered", "text": "Your bank may show a pending hold and the final charge. The hold disappears within 3 to 5 business days.", "citations": ["kc-payment-v1-2"] },
+    "dw-desk-lamp": { "status": "answered", "text": "You have 60 days from delivery, as long as the lamp can be sold again.", "citations": ["dw-refund-policy-v1-1"] }
+  },
+  "judge": {
+    "kc-refund-window": { "status": "complete", "text": "{\"verdict\":\"pass\"}", "usage": { "input": 310, "output": 6 } },
+    "kc-used-knife": { "status": "complete", "text": "{\"verdict\":\"pass\"}", "usage": { "input": 305, "output": 6 } },
+    "kc-price-match": { "status": "complete", "text": "{\"verdict\":\"pass\"}", "usage": { "input": 240, "output": 6 } },
+    "kc-cracked-mug": { "status": "filtered", "text": "{\"verdict\":\"pass\"}", "usage": { "input": 330, "output": 6 } },
+    "kc-office-chair": { "status": "complete", "text": "{\"verdict\":\"pass\"}", "usage": { "input": 300, "output": 6 } },
+    "dw-desk-lamp": { "status": "complete", "text": "{\"verdict\":\"PASS\"}", "usage": { "input": 298, "output": 6 } }
+  },
+  "baseline": [
+    { "id": "kc-refund-window", "grade": "pass" },
+    { "id": "kc-used-knife", "grade": "fail" },
+    { "id": "kc-price-match", "grade": "pass" },
+    { "id": "kc-cracked-mug", "grade": "pass" },
+    { "id": "kc-office-chair", "grade": "pass" },
+    { "id": "kc-billed-twice", "grade": "pass" },
+    { "id": "dw-desk-lamp", "grade": "pass" }
+  ]
+}

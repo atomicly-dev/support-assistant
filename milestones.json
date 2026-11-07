@@ -1,0 +1,136 @@
+[
+  {
+    "n": 1,
+    "slug": "model-boundary",
+    "title": "The model boundary",
+    "goal": "Read every model response once, where it enters your code, and turn it into a result with a status. Then turn the routing reply into checked data, so a cut-off, refused, or malformed reply never reaches the rest of the assistant.",
+    "checks": [
+      "reads a finished reply as complete, with its usage",
+      "reads a reply cut off at the token limit as cut_off",
+      "reads a refusal as refused, though finish_reason is stop",
+      "throws for a finish_reason it doesn't know",
+      "reads a route only from a complete result",
+      "rejects a route that doesn't match the schema"
+    ],
+    "lessons": [
+      "ai-model-boundary",
+      "ai-structured-results"
+    ],
+    "files": [
+      "src/model.mjs"
+    ]
+  },
+  {
+    "n": 2,
+    "slug": "streaming-and-tools",
+    "title": "Streaming and tools",
+    "goal": "Build a streamed answer from its typed events, so only a finish event finishes it. Then give the model an order lookup that takes the customer from the session, and answer every tool call with a checked, safe tool message.",
+    "checks": [
+      "marks a stream that ends without a finish event as interrupted",
+      "keeps the usage unknown when the stream ends before its usage event",
+      "stops at an error event, and skips event types it doesn't handle",
+      "looks up the session customer's own order, with only the fields the answer needs",
+      "answers another customer's order, another shop's, and a missing one the same way",
+      "runs only the tools on its list",
+      "answers every call with a tool message that names its id, failed calls too"
+    ],
+    "lessons": [
+      "ai-stream-events",
+      "ai-tool-contracts",
+      "ai-tool-transcript"
+    ],
+    "files": [
+      "src/stream.mjs",
+      "src/tools.mjs"
+    ]
+  },
+  {
+    "n": 3,
+    "slug": "retrieval",
+    "title": "Retrieval",
+    "goal": "Search pgvector for the chunks of the session's shop and current documents only, answer from the close ones with their ids, and hand off when nothing is close. Check that every citation names a chunk the request sent.",
+    "checks": [
+      "searches only the session's shop",
+      "searches only the current version of each document",
+      "returns at most the limit, nearest first, with each row's id, content, and distance",
+      "hands a question with no chunk within 0.55 to a person, without a model call",
+      "sends only the chunks within 0.55, at most 4, each with its id",
+      "rejects an answer that cites a chunk that wasn't sent",
+      "hands off a refused or cut-off reply without parsing it"
+    ],
+    "lessons": [
+      "ai-embeddings",
+      "ai-vector-search",
+      "ai-grounded-answers"
+    ],
+    "files": [
+      "src/retrieval.mjs"
+    ]
+  },
+  {
+    "n": 4,
+    "slug": "evals",
+    "title": "Evals",
+    "goal": "Measure retrieval with hit rate, recall@k, and MRR on labeled questions, and grade answers with code checks before a model judge. Then compare each run with the score to beat.",
+    "checks": [
+      "averages recall over the questions, so one that found 1 of its 3 chunks counts",
+      "takes MRR from the rank of each question's first relevant chunk",
+      "leaves the questions with no relevant chunk out of the retrieval metrics",
+      "fails an answer on the code checks first, whatever the judge says",
+      "grades a judge result without a clear verdict as ungraded, never as a pass",
+      "counts the ungraded cases as not passed in the pass rate",
+      "lists the cases the baseline passed and this run fails"
+    ],
+    "lessons": [
+      "ai-first-eval",
+      "ai-retrieval-evals",
+      "ai-answer-evals"
+    ],
+    "files": [
+      "src/evals.mjs"
+    ]
+  },
+  {
+    "n": 5,
+    "slug": "refunds",
+    "title": "Refunds",
+    "goal": "Let the model only propose a refund of the customer's own order, and pay only what a support agent approved: the same arguments, by the same agent, before the expiry, once. Replayed injection transcripts must fail.",
+    "checks": [
+      "stores a proposal and pays nothing",
+      "binds the approval to the proposal's exact arguments, the agent, an expiry, and a key",
+      "refuses to pay an amount the approval didn't cover",
+      "refuses an approval used by another agent or after it expires",
+      "pays a retried command once, whatever order its fields come in",
+      "fails every call of the replayed injection transcripts, and pays nothing"
+    ],
+    "lessons": [
+      "ai-safe-actions",
+      "ai-prompt-injection"
+    ],
+    "files": [
+      "src/refunds.mjs"
+    ]
+  },
+  {
+    "n": 6,
+    "slug": "budgets-and-traces",
+    "title": "Budgets and traces",
+    "goal": "Reserve each model call's worst-case cost before it runs, against the user's plan and a global limit, and settle it to its usage. Then price a request's trace, with the cost from usage kept apart from the estimate.",
+    "checks": [
+      "reserves against the user's plan limit, then the global limit",
+      "lets only the calls that fit reach the model when three arrive at once",
+      "settles to the usage, or keeps the reservation when usage never arrives",
+      "charges nothing more for a settle sent twice",
+      "keeps a trace's cost from usage apart from its estimated cost",
+      "counts only model spans, so a trace without them costs nothing"
+    ],
+    "lessons": [
+      "ai-service-budgets",
+      "ai-incident-traces"
+    ],
+    "files": [
+      "src/budget.mjs",
+      "src/trace.mjs"
+    ]
+  }
+]

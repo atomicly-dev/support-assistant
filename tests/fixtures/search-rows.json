@@ -1,0 +1,98 @@
+{
+  "about": "The 5 nearest rows for 3 questions, as searchChunks returns them for the question's shop and current versions, recorded from the ai-support data. Distances are rounded to 3 decimals.",
+  "questions": {
+    "q-dw-desk-lamp": {
+      "shop": "deskworks",
+      "question": "How long do I have to return a desk lamp for a refund?",
+      "rows": [
+        {
+          "id": "dw-refund-policy-v1-1",
+          "content": "Refund policy, how long you have: You can ask for a refund within 60 days of delivery, as long as the item can be sold again.",
+          "distance": 0.384
+        },
+        {
+          "id": "dw-assembled-furniture-v1-1",
+          "content": "Returning assembled furniture, desks and chairs: Office chairs and desks can be returned within 30 days, even after assembly. Take the item apart, and pack the parts in the original box.",
+          "distance": 0.388
+        },
+        {
+          "id": "dw-assembled-furniture-v1-2",
+          "content": "Returning assembled furniture, pickup: For desks over 25 kg, we book a courier pickup. The pickup fee of $25 is taken from the refund.",
+          "distance": 0.458
+        },
+        {
+          "id": "dw-refund-policy-v1-2",
+          "content": "Refund policy, how refunds are paid: Refunds go to the original payment method within 7 business days after the item passes inspection.",
+          "distance": 0.469
+        },
+        {
+          "id": "dw-shipping-v1-1",
+          "content": "Shipping, delivery times: Small items arrive in 2 to 4 business days. Desks and chairs ship by freight, and take 5 to 10 business days.",
+          "distance": 0.553
+        }
+      ]
+    },
+    "q-refund-window": {
+      "shop": "kettleandco",
+      "question": "How many days do I have to ask for a refund?",
+      "rows": [
+        {
+          "id": "kc-refund-policy-v2-1",
+          "content": "Refund policy, how long you have: You can ask for a refund within 30 days of delivery. The 30 days start on the day the carrier marks the order as delivered.",
+          "distance": 0.346
+        },
+        {
+          "id": "kc-refund-policy-v2-2",
+          "content": "Refund policy, how refunds are paid: Refunds are paid to the original payment method within 5 business days after we receive the item. Shipping costs are refunded only when the item arrived damaged or wrong.",
+          "distance": 0.466
+        },
+        {
+          "id": "kc-warranty-v1-2",
+          "content": "Warranty, making a claim: Send the order number and a short video of the fault from the Orders page. We repair or replace the appliance within 14 days.",
+          "distance": 0.584
+        },
+        {
+          "id": "kc-gift-cards-v1-3",
+          "content": "Gift cards, expiry and refunds: Gift cards don't expire. They can't be exchanged for cash or refunded.",
+          "distance": 0.593
+        },
+        {
+          "id": "kc-refund-policy-v2-3",
+          "content": "Refund policy, items we can't refund: Gift cards, opened coffee beans, and items marked final sale can't be refunded.",
+          "distance": 0.634
+        }
+      ]
+    },
+    "q-no-answer": {
+      "shop": "kettleandco",
+      "question": "Do you match a lower price from another store?",
+      "rows": [
+        {
+          "id": "kc-gift-cards-v1-2",
+          "content": "Gift cards, checking the balance: Enter the gift card code on the Gift cards page to see its balance. You can use one card across several orders.",
+          "distance": 0.698
+        },
+        {
+          "id": "kc-damaged-items-v1-2",
+          "content": "Damaged or wrong items, what we do: We send a free replacement, or a full refund including shipping if the item is out of stock. You don't need to send the broken item to us.",
+          "distance": 0.735
+        },
+        {
+          "id": "kc-gift-cards-v1-1",
+          "content": "Gift cards, buying one: Digital gift cards come in amounts from $10 to $200, and arrive by email within an hour.",
+          "distance": 0.757
+        },
+        {
+          "id": "kc-payment-v1-2",
+          "content": "Payment, a charge that appears twice: When you place an order, your bank may show a pending hold and the final charge. The hold disappears within 3 to 5 business days.",
+          "distance": 0.759
+        },
+        {
+          "id": "kc-returns-v1-3",
+          "content": "Returns, used items: You can return a used item if it still works and is clean. Knives and cutting boards can only be returned unused.",
+          "distance": 0.766
+        }
+      ]
+    }
+  }
+}

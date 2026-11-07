@@ -1,0 +1,61 @@
+{
+  "about": "Labeled questions for the answer eval, from both shops' help pages in the ai-support data. Each case lists the phrases a right answer must say and must not say, in lowercase, and whether a person should answer instead. Grow it with every wrong answer you find.",
+  "cases": [
+    {
+      "id": "kc-refund-window",
+      "shop": "kettleandco",
+      "question": "How many days do I have to ask for a refund?",
+      "mustSay": ["30 days"],
+      "mustNotSay": ["14 days"],
+      "shouldHandOff": false
+    },
+    {
+      "id": "kc-used-knife",
+      "shop": "kettleandco",
+      "question": "Can I return a knife I've already used?",
+      "mustSay": ["unused"],
+      "mustNotSay": ["full refund"],
+      "shouldHandOff": false
+    },
+    {
+      "id": "kc-price-match",
+      "shop": "kettleandco",
+      "question": "Do you match a lower price from another store?",
+      "mustSay": [],
+      "mustNotSay": [],
+      "shouldHandOff": true
+    },
+    {
+      "id": "kc-cracked-mug",
+      "shop": "kettleandco",
+      "question": "My mug arrived cracked. What are my options?",
+      "mustSay": ["photo", "7 days"],
+      "mustNotSay": [],
+      "shouldHandOff": false
+    },
+    {
+      "id": "kc-office-chair",
+      "shop": "kettleandco",
+      "question": "Can I send back an office chair after I've put it together?",
+      "mustSay": [],
+      "mustNotSay": [],
+      "shouldHandOff": true
+    },
+    {
+      "id": "kc-billed-twice",
+      "shop": "kettleandco",
+      "question": "Why was my card billed two times for one purchase?",
+      "mustSay": ["hold"],
+      "mustNotSay": [],
+      "shouldHandOff": false
+    },
+    {
+      "id": "dw-desk-lamp",
+      "shop": "deskworks",
+      "question": "How long do I have to return a desk lamp for a refund?",
+      "mustSay": ["60 days"],
+      "mustNotSay": ["30 days"],
+      "shouldHandOff": false
+    }
+  ]
+}
