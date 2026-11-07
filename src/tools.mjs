@@ -26,7 +26,6 @@ export const GET_ORDER_TOOL = {
  * session's shop, and to { error: "order not found" } for any other order.
  */
 export async function getOrder({ orderId }, session, findOrder) {
-  if (!Number.isInteger(orderId)) return { error: "orderId must be an integer" };
   const order = await findOrder(orderId);
   if (!order || order.tenantId !== session.tenantId || order.email !== session.email) return { error: "order not found" };
   return { id: order.id, status: order.status, totalCents: order.totalCents, orderedOn: order.orderedOn };

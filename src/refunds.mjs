@@ -31,7 +31,6 @@ export const PROPOSE_REFUND_TOOL = {
  * the session customer's, or an amount that isn't a whole number of cents from 1 to the order's total.
  */
 export async function proposeRefund({ orderId, amountCents }, session, desk) {
-  if (!Number.isInteger(orderId)) return { error: "orderId must be an integer" };
   const order = await desk.findOrder(orderId);
   if (!order || order.tenantId !== session.tenantId || order.email !== session.email) return { error: "order not found" };
   if (!Number.isInteger(amountCents) || amountCents < 1 || amountCents > order.totalCents) {
@@ -51,10 +50,12 @@ export async function proposeRefund({ orderId, amountCents }, session, desk) {
 export function approve(proposalId, agent, now, desk) {
   const proposal = desk.proposals.get(proposalId);
   if (!proposal) return { error: "no such proposal" };
-  const approval = { args: { ...proposal }, actorId: agent.actorId, expiresAt: now + APPROVAL_MS, idempotencyKey: randomUUID() };
+  // One proposal gets one approval: a second one would get its own key, and pay the refund again.
+  for (const approval of desk.approvals.values()) if (approval.proposalId === proposalId) return { error: "already approved" };
+  const approval = { proposalId, args: { ...proposal }, actorId: agent.actorId, expiresAt: now + APPROVAL_MS, idempotencyKey: randomUUID() };
   const approvalId = `a_${desk.approvals.size + 1}`;
   desk.approvals.set(approvalId, approval);
-  return { approvalId, ...approval };
+  return { approvalId, args: { ...approval.args }, actorId: approval.actorId, expiresAt: approval.expiresAt, idempotencyKey: approval.idempotencyKey };
 }
 
 /**
