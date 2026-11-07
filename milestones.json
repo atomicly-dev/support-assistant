@@ -76,7 +76,7 @@
       "averages recall over the questions, so one that found 1 of its 3 chunks counts",
       "takes MRR from the rank of each question's first relevant chunk",
       "leaves the questions with no relevant chunk out of the retrieval metrics",
-      "fails an answer on the code checks first, whatever the judge says",
+      "fails an answer on the code checks first, whatever the judge's verdict",
       "grades a judge result without a clear verdict as ungraded, never as a pass",
       "counts the ungraded cases as not passed in the pass rate",
       "lists the cases the baseline passed and this run fails"

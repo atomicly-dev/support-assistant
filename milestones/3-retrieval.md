@@ -32,7 +32,7 @@ Pass the embedding as a query parameter, cast with `::vector`. pgvector reads a 
 3. Call `model.complete` with a developer message, `ANSWER_INSTRUCTIONS`, and a user message with `evidenceBlock(sources)` and the question in `<question>` tags. Send `response_format: ANSWER_FORMAT` and `max_completion_tokens: 400`.
 4. Parse only a `"complete"` result. Its JSON is `{ status, text, citations }`. Check the citations with `checkCitations`.
 
-It resolves to `{ status: "answered", text, citations }`, or to `{ status: "insufficient", text: HANDOFF, reason }` when a person should answer instead. The reason is `"no sources"`, the result's status for a reply that isn't complete, `"invalid JSON"`, `"insufficient"` when the model says the sources don't answer it, or `checkCitations`' reason.
+It resolves to `{ status: "answered", text, citations }`, or to `{ status: "insufficient", text: HANDOFF, reason }` when a person should answer instead. The reason is `"no sources"`, the result's status for a reply that isn't complete, `"invalid JSON"`, `"insufficient"` when the reply's own status is `"insufficient"`, or `checkCitations`' reason.
 
 The file already has `MAX_DISTANCE`, `MAX_SOURCES`, `HANDOFF`, `ANSWER_INSTRUCTIONS`, `ANSWER_FORMAT`, and `evidenceBlock`.
 
