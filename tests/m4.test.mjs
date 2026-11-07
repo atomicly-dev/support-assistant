@@ -47,7 +47,7 @@ test("leaves the questions with no relevant chunk out of the retrieval metrics",
   );
 });
 
-test("fails an answer on the code checks first, whatever the judge says", () => {
+test("fails an answer on the code checks first, whatever the judge's verdict", () => {
   const knife = grade("kc-used-knife");
   const expected = { id: "kc-used-knife", grade: "fail", reasons: ['missing "unused"', 'says "full refund"'] };
   assert.deepEqual(

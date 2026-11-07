@@ -1,6 +1,6 @@
 # Support assistant
 
-A project for the [AI engineering course](https://atomicly.dev/courses/ai-engineering) on [atomicly](https://atomicly.dev). You build a support assistant for two online shops, milestone by milestone, on your own machine: it answers from each shop's help pages, looks up a customer's orders, and proposes refunds an agent approves. Each milestone applies a few lessons from the course, and has checks that tell you when it works.
+A project for the [AI engineering course](https://atomicly.dev/courses/ai-engineering) on [atomicly](https://atomicly.dev). You build a support assistant for two online shops, milestone by milestone, on your own machine: it answers from each shop's help pages, looks up a customer's orders, and proposes refunds a support agent approves. Each milestone applies a few lessons from the course, and has checks that tell you when it works.
 
 ## The brief
 
@@ -58,7 +58,7 @@ Each milestone has a page with the situation, the functions to write with their 
 | [5. Refunds](milestones/5-refunds.md) | `src/refunds.mjs` | `npm run milestone -- 5` |
 | [6. Budgets and traces](milestones/6-budgets-and-traces.md) | `src/budget.mjs`, `src/trace.mjs` | `npm run milestone -- 6` |
 
-Do them in order, or in any order you like: each milestone's checks need only that milestone's code, and get what they'd need from earlier milestones from fixtures in `tests/fixtures/`.
+Do them in order, or in any order you like. Each milestone's checks need only that milestone's code: what they'd need from an earlier milestone comes from the fixtures in `tests/fixtures/`.
 
 ## How the checks work
 
@@ -66,13 +66,13 @@ Do them in order, or in any order you like: each milestone's checks need only th
 
 Each push to your repo runs the same checks on GitHub Actions, in `.github/workflows/milestones.yml`: one job per milestone, named `milestone-1` to `milestone-6`. Milestone 3's job starts PostgreSQL first.
 
-On the project's page on atomicly, paste your repo's URL once. atomicly reads those checks from GitHub, and marks a milestone passed from the first commit that passes it. It sees only whether each check passed. It matches the checks by their names, so keep the job names as they are. atomicly can't read the checks of a private repo, so for one, you tick each milestone yourself on the page.
+On the project's page on atomicly, paste your repo's URL once. atomicly reads those checks from GitHub, and marks a milestone passed from the first commit that passes it. It reads only whether each check passed. It matches the checks by their names, so keep the job names as they are. atomicly can't read the checks of a private repo, so for one, you tick each milestone yourself on the page.
 
 `.github/workflows/template-ci.yml` is the template's own check, for its maintainers. It never runs in your copy.
 
 ## Ask with a real model
 
-Once every milestone passes, you can run the whole assistant with GPT-6 Luna and your own OpenAI API key. You pay OpenAI for the calls, and the key never leaves your machine:
+Once every milestone passes, you can run the whole assistant with GPT-6 Luna and your own OpenAI API key. You pay OpenAI for the calls, and your key goes only to OpenAI, never to atomicly:
 
 ```sh
 export OPENAI_API_KEY=sk-...
@@ -82,7 +82,7 @@ npm run ask -- "Please refund order 1042, my kettle stopped heating" --live
 npm run ask -- "How long do I have to return a desk lamp for a refund?" --live --shop deskworks --customer pia.lund@example.com
 ```
 
-In place of the `export` line, you can put `OPENAI_API_KEY=sk-...` in a file named `.env` in this folder. Git ignores that file, so your key stays out of your commits. Without a key, `ask` says how to set one and stops.
+In place of the `export` line, you can put `OPENAI_API_KEY=sk-...` in a file named `.env` in this folder. Git ignores that file, so your key stays out of your commits. Without a key, `ask` prints how to set one and stops.
 
 `--shop` and `--customer` set the session, as a login would: the shop is `kettleandco` or `deskworks`, and the customer is an email from `data/orders.json`. By default, you're Chen Wei, `chen.wei@example.com`, who placed order 1042 at Kettle & Co. Try asking about order 1043, which is someone else's.
 

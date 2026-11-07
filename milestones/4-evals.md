@@ -21,7 +21,7 @@ All three functions go in `src/evals.mjs`.
 
 **`gradeAnswer(testCase, answer, judgeResult)`** grades one answer. `testCase` is a case from `evals/answer-cases.json`: `{ id, mustSay, mustNotSay, shouldHandOff }`, with the phrases in lowercase. `answer` is `answerQuestion`'s result from milestone 3, and `judgeResult` is the judge's model result, or `undefined` when the judge call stored nothing. It returns `{ id, grade, reasons }`:
 
-1. The code checks come first. The answer fails with `"wrong handoff"` when `shouldHandOff` doesn't match `answer.status === "insufficient"`, with `` `missing "${phrase}"` `` for each `mustSay` phrase its lowercased text lacks, and with `` `says "${phrase}"` `` for each `mustNotSay` phrase it has. Any of these makes the grade `"fail"`, whatever the judge says.
+1. The code checks come first. The answer fails with `"wrong handoff"` when `shouldHandOff` doesn't match `answer.status === "insufficient"`, with `` `missing "${phrase}"` `` for each `mustSay` phrase its lowercased text lacks, and with `` `says "${phrase}"` `` for each `mustNotSay` phrase it has. Any of these makes the grade `"fail"`, whatever the judge's verdict.
 2. Then the judge's verdict. Anything but a clear verdict is `"ungraded"`, never a pass: a missing result (reason `"missing"`), a status that isn't `"complete"` (the status), text that isn't JSON (`"invalid JSON"`), or a verdict that isn't exactly `"pass"` or `"fail"` (`` `unknown verdict: ${verdict}` ``).
 3. `{"verdict":"fail","reason":"..."}` is a `"fail"`, with the judge's reason after `judge: `, and `{"verdict":"pass"}` is a `"pass"`, with no reasons.
 
@@ -44,7 +44,7 @@ The checks use the dataset's labels with rankings recorded from the course's vec
 - averages recall over the questions, so one that found 1 of its 3 chunks counts
 - takes MRR from the rank of each question's first relevant chunk
 - leaves the questions with no relevant chunk out of the retrieval metrics
-- fails an answer on the code checks first, whatever the judge says
+- fails an answer on the code checks first, whatever the judge's verdict
 - grades a judge result without a clear verdict as ungraded, never as a pass
 - counts the ungraded cases as not passed in the pass rate
 - lists the cases the baseline passed and this run fails
