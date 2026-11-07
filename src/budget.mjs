@@ -29,10 +29,9 @@ export function settle(budget, id, actualCents) {
 }
 
 /**
- * Makes one model.complete(request) call within the budget. It reserves
- * model.worstCaseCents(request) first, and settles to model.costCents(usage) after the call.
+ * Makes one model.complete(request) call within the budget, and charges what it cost.
  * Resolves to the model's result, or to { status: "over_budget", text: null, usage: null, reason }
- * without a call when the reservation doesn't fit.
+ * without a call when it doesn't fit.
  */
 export async function callWithBudget(budget, user, request, model) {
   throw new Error("Not built yet: milestone 6");
