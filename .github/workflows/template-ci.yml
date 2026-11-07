@@ -75,7 +75,8 @@ jobs:
       # Three runs, to catch a flaky check.
       - name: Every solution passes
         run: |
-          for run in 1 2 3; do
+          for attempt in 1 2 3; do
+            echo "Run $attempt of 3"
             npm run milestone -- all
           done
       - if: failure()
