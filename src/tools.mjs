@@ -3,7 +3,8 @@
 // A tool call is a request for your code to act. getOrder is the order lookup the model can ask for,
 // and runToolCall is the dispatcher that checks and runs each call.
 
-// The tool as the model sees it. Its only argument is the order: the customer comes from the session.
+// The tool's definition, as the model gets it. Its only argument is the order: the customer comes
+// from the session.
 export const GET_ORDER_TOOL = {
   type: "function",
   function: {

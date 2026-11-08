@@ -3,14 +3,14 @@
     "n": 1,
     "slug": "model-boundary",
     "title": "The model boundary",
-    "goal": "Read every model response once, where it enters your code, and turn it into a result with a status. Then turn the routing reply into checked data, so a cut-off, refused, or malformed reply never reaches the rest of the assistant, even when the schema went missing.",
+    "goal": "Read every model response once, where it enters your code, and turn it into a result with a status. Then turn the routing reply into checked data, so a cut-off, refused, or malformed reply never reaches the rest of the assistant, even when the schema is missing.",
     "checks": [
       "reads each finish_reason as its status, with the text and the usage",
       "reads a refusal as refused, whatever its finish_reason",
-      "throws for a finish_reason it doesn't know",
+      "throws for an unknown finish_reason",
       "reads a route only from a complete result",
       "rejects a route that doesn't match the schema",
-      "checks the shape of JSON the schema would have stopped, such as null"
+      "checks the JSON's shape, even without the schema"
     ],
     "lessons": [
       "ai-model-boundary",
@@ -31,11 +31,11 @@
       "stops at an error event, and skips event types it doesn't handle",
       "ends the text at the finish event, and still reads the usage after it",
       "looks up the session customer's own order, with only the fields the answer needs",
-      "answers another customer's order and a missing one the same way, whatever the arguments say",
+      "answers another customer's order and a missing one the same way, whatever's in the arguments",
       "keeps one email's orders apart in each shop",
       "runs only the tools on its list",
-      "passes the tool the session from the login, whatever the arguments say",
-      "answers every call with a tool message that names its id, failed calls too"
+      "passes the tool the login's session, whatever's in the arguments",
+      "answers every call with a tool message for its id, failed calls too"
     ],
     "lessons": [
       "ai-stream-events",
@@ -51,7 +51,7 @@
     "n": 3,
     "slug": "retrieval",
     "title": "Retrieval",
-    "goal": "Search pgvector in one query for the chunks of the session's shop and current versions only, so neither another shop's chunk nor a rolled-back version comes back. Answer from the close ones with their ids, hand off when nothing is close, and check that every citation names a chunk the request sent.",
+    "goal": "Search pgvector in one query for chunks from the session's shop and current versions only, so another shop's chunk or a rolled-back version never comes back. Answer from the close chunks with their ids, hand off when nothing is close, and check that every citation is a chunk you sent.",
     "checks": [
       "searches only the session's shop",
       "searches only the current version of each document",
@@ -59,7 +59,7 @@
       "returns at most the limit, nearest first, with ties in id order",
       "hands a question with no chunk within 0.55 to a person, without a model call",
       "sends only the chunks within 0.55, at most 4, each with its id",
-      "asks with the instructions, the answer schema, a token limit, and the question in its tags",
+      "sends the instructions, the answer schema, a token limit, and the question in its tags",
       "rejects an answer with no citations, or one that cites a chunk that wasn't sent",
       "hands off a reply that isn't complete, isn't a JSON object, or says the sources don't answer"
     ],
@@ -85,7 +85,7 @@
       "grades a judge result without a clear verdict as ungraded, never as a pass",
       "counts the ungraded cases as not passed in the pass rate",
       "lists the cases the baseline passed and this run fails",
-      "leaves a case the baseline never had out of broken"
+      "doesn't count a case the baseline never had as broken"
     ],
     "lessons": [
       "ai-first-eval",
@@ -100,7 +100,7 @@
     "n": 5,
     "slug": "refunds",
     "title": "Refunds",
-    "goal": "Let the model only propose a refund of the customer's own order, and pay only what a support agent approved: the same arguments, by the same agent, before the expiry, once, however many times it's approved. Replayed injection transcripts must fail.",
+    "goal": "Let the model only propose refunds of the customer's orders, and pay only what a support agent approved: the same arguments, by the same agent, before the expiry, and only once, however many times it's approved. Every call in the replayed injection transcripts must fail.",
     "checks": [
       "stores a proposal and pays nothing",
       "proposes only the customer's own order, for 1 cent up to its total",
@@ -109,7 +109,7 @@
       "refuses an unknown approval, another agent's, or an expired one",
       "pays a retried command once, whatever order its fields come in",
       "approves each proposal once, so a double approval can't pay twice",
-      "fails every call of the replayed injection transcripts, and pays nothing"
+      "fails every call in the replayed injection transcripts, and pays nothing"
     ],
     "lessons": [
       "ai-safe-actions",

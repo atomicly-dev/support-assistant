@@ -1,18 +1,18 @@
 # Milestone 6: Budgets and traces
 
-Read this on atomicly, with the tutor beside it: [milestone 6 on atomicly](https://atomicly.dev/projects/proj-support-assistant/milestones/proj-support-m6).
+Read this on atomicly, with the tutor next to it: [milestone 6 on atomicly](https://atomicly.dev/projects/proj-support-assistant/milestones/proj-support-m6).
 
 Lessons: [Rate limiting by cost: budget the whole request](https://atomicly.dev/lessons/ai-service-budgets) and [Tracing: explain a slower, more expensive answer](https://atomicly.dev/lessons/ai-incident-traces)
 
 ## The situation
 
-A trial user gets 50 cents of model calls a day. One of them, with 20 cents spent, sends three questions from three browser tabs at once. Each request checks the spend, calls the model, then records the cost, so all three pass the check before any of them records anything. What has to happen in the same step as the check, so the third request sees the first two?
+A trial user gets 50 cents of model calls a day. One of them, with 20 cents already spent, sends three questions at once from three browser tabs. Each request checks the spend, calls the model, then records the cost, so all three pass the check before any of them records anything. What has to happen in the same step as the check, so the third request's check counts the first two?
 
 Then a deploy doubled the assistant's cost, and every request still returned `200`. The dashboard added up only the costs from usage, so a call whose stream broke before its usage arrived showed no cost.
 
 ## What you build
 
-`reserve`, `settle`, and `callWithBudget` go in `src/budget.mjs`, and `traceTotals` goes in `src/trace.mjs`. `PLANS` and `createBudget` are already in `src/budget.mjs`.
+`reserve`, `settle`, and `callWithBudget` go in `src/budget.mjs`, next to `PLANS` and `createBudget`, which are already there. `traceTotals` goes in `src/trace.mjs`.
 
 `budget` comes from `createBudget()`. It holds one day's budget, in cents:
 
@@ -21,7 +21,7 @@ Then a deploy doubled the assistant's cost, and every request still returned `20
 - `users`: an empty `Map` from a user's id to the cents they reserved or spent today
 - `total`: the cents everyone reserved or spent today, `0` at first
 - `reservations`: an empty `Map` for the pending reservations, by id. Store what `settle` needs, such as `{ userId, cents }`.
-- `nextId`: `1`, a counter you can use for the ids
+- `nextId`: a counter you can use for the ids, starting at `1`
 
 `user` is `{ id, plan }`. `model` is a model client, fake or live:
 
@@ -31,7 +31,7 @@ Then a deploy doubled the assistant's cost, and every request still returned `20
 
 **`reserve(budget, user, cents)`** reserves one call's cost before the call. It returns `{ ok: true, id }`, `{ ok: false, reason: "user limit" }`, or `{ ok: false, reason: "global limit" }`.
 
-**`settle(budget, id, actualCents)`** replaces a reservation with what the call cost. `actualCents` is `null` when the usage never arrived. It returns `{ ok: true, charged }`, or `{ ok: false, reason }`, with a reason you choose, for an id it already settled or never made.
+**`settle(budget, id, actualCents)`** replaces a reservation with what the call cost. `actualCents` is `null` when the usage never arrived. It returns `{ ok: true, charged }`. For an id that's already settled, or that `reserve` never returned, it returns `{ ok: false, reason }`, with any reason you like.
 
 **`callWithBudget(budget, user, request, model)`** makes one `model.complete(request)` call within the budget. It resolves to the model's result, or to `{ status: "over_budget", text: null, usage: null, reason }`, with the reservation's reason.
 
@@ -44,7 +44,7 @@ Then a deploy doubled the assistant's cost, and every request still returned `20
 
 ## The rules
 
-- A reservation fits when the user's reserved and spent cents, plus the new ones, stay within the plan's limit, and everyone's stay within the global limit. A reservation that fills a limit exactly fits.
+- A reservation fits when the user's reserved and spent cents, plus the new ones, stay within the plan's limit, and everyone's stay within the global limit. A reservation that fills a limit exactly still fits.
 - The user's limit comes first, so a call that fits neither limit gets `"user limit"`.
 - A failed reservation records nothing.
 - When three calls arrive at once, only the calls that fit reach the model.
@@ -57,7 +57,7 @@ The budget lives in memory, in one Node process. With several processes, keep th
 
 ## The new case
 
-The provider took too long, and the client gave up: `model.complete` threw a timeout error. The request may have reached the provider, which may bill it. So the call settles its reservation as the charge, with `settle(budget, id, null)`, and the error goes on to the caller. No reservation stays pending. The check **settles a failed call to its reservation, and passes its error on** tests it.
+The provider took too long, and the client gave up: `model.complete` threw a timeout error. The request may still have reached the provider, which can bill it. So `callWithBudget` charges the reservation with `settle(budget, id, null)`, and passes the error on to the caller. No reservation stays pending. The check "settles a failed call to its reservation, and passes its error on" tests it.
 
 ## Run the checks
 
@@ -65,7 +65,7 @@ The provider took too long, and the client gave up: `model.complete` threw a tim
 npm run milestone -- 6
 ```
 
-The checks use the fake model from `src/lib/fake-model.mjs`: each call costs at most 15 cents, and 1 cent per 100 tokens of usage. They need no database:
+These checks use the fake model in `src/lib/fake-model.mjs`, where each call costs at most 15 cents, and 1 cent per 100 tokens of usage. They run without the database:
 
 - reserves against the user's plan limit, then the global limit
 - lets only the calls that fit reach the model when three arrive at once
@@ -78,7 +78,7 @@ The checks use the fake model from `src/lib/fake-model.mjs`: each call costs at 
 
 ## Hints
 
-Each hint gives away a bit more. Open only the one you need.
+Stuck? The hints go from where the course teaches this, to the approach, to a detail people often get wrong.
 
 <details>
 <summary>Hint 1: where the course teaches it</summary>
@@ -92,9 +92,9 @@ Each hint gives away a bit more. Open only the one you need.
 <summary>Hint 2: the approach</summary>
 
 - `reserve`: check both limits and record the reservation in the same step, with no `await` in between.
-- `settle`: find the reservation and remove it, then move the user's spend and the total by the difference between the charge and the reservation.
-- `callWithBudget`: reserve, then call the model inside a `try`. Settle on both paths, the result's and the error's.
-- `traceTotals`: keep the model spans, split them by whether their usage arrived, and sum each group with its own price.
+- `settle`: find the reservation and remove it, then adjust the user's spend and the total by the difference between the charge and the reservation.
+- `callWithBudget`: reserve, then call the model inside a `try`. Settle on both paths: after a result, and after an error.
+- `traceTotals`: keep only the model spans, split them by whether their usage arrived, and sum each group with its own price.
 
 </details>
 
@@ -107,4 +107,4 @@ Each hint gives away a bit more. Open only the one you need.
 
 ## The solution
 
-The `solutions` branch has every milestone built. This one is in [`src/budget.mjs`](https://github.com/atomicly-dev/support-assistant/blob/solutions/src/budget.mjs) and [`src/trace.mjs`](https://github.com/atomicly-dev/support-assistant/blob/solutions/src/trace.mjs).
+On the `solutions` branch, this milestone's code is in [`src/budget.mjs`](https://github.com/atomicly-dev/support-assistant/blob/solutions/src/budget.mjs) and [`src/trace.mjs`](https://github.com/atomicly-dev/support-assistant/blob/solutions/src/trace.mjs).

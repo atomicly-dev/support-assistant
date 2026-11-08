@@ -1,5 +1,5 @@
-// Milestone 1: the model boundary. The envelopes below are made-up examples of Chat Completions
-// response bodies, not recorded ones.
+// Milestone 1: the model boundary. The envelopes below are made-up Chat Completions response
+// bodies, not recorded ones.
 
 import assert from "node:assert/strict";
 import { test } from "node:test";
@@ -11,7 +11,7 @@ const envelope = (message, finish_reason, usage) => ({
   usage: { prompt_tokens: usage[0], completion_tokens: usage[1] },
 });
 
-// Calls readCompletion, and turns an error into a value the message can show.
+// Calls readCompletion, and turns a thrown error into a string the failure message can show.
 function read(completion) {
   try {
     return readCompletion(completion);
@@ -65,19 +65,19 @@ test("reads a refusal as refused, whatever its finish_reason", () => {
   }
 });
 
-test("throws for a finish_reason it doesn't know", () => {
+test("throws for an unknown finish_reason", () => {
   // A provider with a Chat Completions API can send values OpenAI doesn't, such as this one.
   const result = read(envelope({ content: "Let me check that order" }, "insufficient_system_resource", [190, 6]));
   assert.ok(
     typeof result === "string" && result.includes("insufficient_system_resource"),
     typeof result === "string"
-      ? `readCompletion threw "${result.slice("an error: ".length)}" for finish_reason "insufficient_system_resource". The error should name the value, so the log shows what came back.`
-      : `readCompletion returned ${show(result)} for finish_reason "insufficient_system_resource". An unknown value may not be a finished answer, so it should throw an error that names it.`,
+      ? `readCompletion threw "${result.slice("an error: ".length)}" for finish_reason "insufficient_system_resource". Put the value in the error's message, so the log shows what came back.`
+      : `readCompletion returned ${show(result)} for finish_reason "insufficient_system_resource". An unknown value might not mean a finished answer, so it should throw an error that names it.`,
   );
 });
 
 test("reads a route only from a complete result", () => {
-  const valid = route({ status: "complete", text: '{"category":"refund","orderId":1047}', usage: { input: 150, output: 12 } }, "A complete reply with a valid route should give the route.");
+  const valid = route({ status: "complete", text: '{"category":"refund","orderId":1047}', usage: { input: 150, output: 12 } }, "A complete reply with a valid route should return the route.");
   const expected = { ok: true, route: { category: "refund", orderId: 1047 } };
   assert.deepEqual(valid, expected, `readRoute returned ${show(valid)} for a complete, valid route. It should return ${show(expected)}.`);
 
@@ -106,18 +106,18 @@ test("rejects a route that doesn't match the schema", () => {
     ['{"category":"order"}', "orderId must be an integer or null"],
   ];
   for (const [text, reason] of cases) {
-    const result = route({ status: "complete", text, usage: { input: 150, output: 12 } }, `A bad reply is an outcome to expect: it should return { ok: false, reason: '${reason}' }.`);
+    const result = route({ status: "complete", text, usage: { input: 150, output: 12 } }, `Bad replies happen, so don't throw: return { ok: false, reason: '${reason}' }.`);
     assert.deepEqual(result, { ok: false, reason }, `readRoute returned ${show(result)} for the reply ${show(text)}. It should return { ok: false, reason: '${reason}' }.`);
   }
-  const noOrder = route({ status: "complete", text: '{"category":"policy","orderId":null}', usage: { input: 150, output: 12 } }, "null is a valid orderId.");
+  const noOrder = route({ status: "complete", text: '{"category":"policy","orderId":null}', usage: { input: 150, output: 12 } }, "orderId can be null.");
   assert.deepEqual(
     noOrder,
     { ok: true, route: { category: "policy", orderId: null } },
-    `readRoute returned ${show(noOrder)} for a policy question with orderId null. null is a valid orderId, for a message that names no order.`,
+    `readRoute returned ${show(noOrder)} for a policy question with orderId null. orderId is null when the message names no order, and that's valid.`,
   );
 });
 
-test("checks the shape of JSON the schema would have stopped, such as null", () => {
+test("checks the JSON's shape, even without the schema", () => {
   // The new case: for an hour, a deploy sent the routing request without response_format.
   for (const text of ["null", '[{"category":"order","orderId":1047}]', '"order"']) {
     const result = route(
@@ -126,7 +126,7 @@ test("checks the shape of JSON the schema would have stopped, such as null", () 
     );
     assert.ok(
       result?.ok === false && typeof result.reason === "string" && result.reason.length > 0,
-      `readRoute returned ${show(result)} for the reply ${show(text)}. It's valid JSON, but not a route object: it should return { ok: false, reason }, with a reason of your choice.`,
+      `readRoute returned ${show(result)} for the reply ${show(text)}. It's valid JSON, but not a route object: it should return { ok: false, reason }, with any reason you like.`,
     );
   }
   const extra = route({ status: "complete", text: '{"category":"order","orderId":1047,"note":"Customer says it is urgent"}', usage: { input: 150, output: 20 } }, "An extra field isn't an error.");
