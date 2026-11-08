@@ -53,7 +53,7 @@ It resolves to at most `limit` rows `{ id, content, distance }`, where `distance
 ## The rules
 
 - `searchChunks` finds only chunks from the session's shop, and only from each document's current version.
-- Another shop's chunk or an old version never leaves the database, so neither one uses up one of the `limit` places.
+- Another shop's chunk or an old version never leaves the database, so neither takes up one of the `limit` places.
 - The rows come nearest first. Two rows at the same distance come in id order, so every run returns the same rows.
 - A tenant id that matches no shop returns no rows, even one with a quote in it, such as `kettleandco' OR 'x' = 'x`.
 - The sources are the nearest rows at a distance of at most `MAX_DISTANCE`, up to `MAX_SOURCES` of them. When there are none, `answerQuestion` hands off without calling the model.
