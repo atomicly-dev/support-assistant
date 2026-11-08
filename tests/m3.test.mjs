@@ -217,7 +217,7 @@ test("hands a question with no chunk within 0.55 to a person, without a model ca
   assert.equal(
     model.requests.length,
     0,
-    `answerQuestion called the model ${model.requests.length} time(s) for "${question}", whose nearest chunk is at 0.698. With no source left, there's nothing to answer from: make no call.`,
+    `answerQuestion called the model ${model.requests.length} time(s) for "${question}", whose nearest chunk is at 0.698. With no source left, there's nothing to answer from: don't call the model.`,
   );
   const expected = { status: "insufficient", text: HANDOFF, reason: "no sources" };
   assert.deepEqual(result, expected, `answerQuestion returned ${show(result)}. It should hand off: ${show(expected)}.`);
@@ -250,7 +250,7 @@ test("sends only the chunks within 0.55, at most 4, each with its id", async () 
   assert.deepEqual(sentIds(edge.requests[0]), ["dw-shipping-v1-1"], `answerQuestion sent ${show(sentIds(edge.requests[0]))} for one row at exactly 0.55. A row at a distance of at most MAX_DISTANCE is a source.`);
 });
 
-test("asks with the instructions, the answer schema, a token limit, and the question in its tags", async () => {
+test("sends the instructions, the answer schema, a token limit, and the question in its tags", async () => {
   const { question, rows } = recorded["q-refund-window"];
   const model = fakeModel({ replies: [complete({ status: "insufficient", text: "", citations: [] })] });
   await answer(question, rows, model);
@@ -276,7 +276,7 @@ test("rejects an answer with no citations, or one that cites a chunk that wasn't
   const uncited = checkCitations({ status: "answered", text: "The warranty lasts 2 years.", citations: [] }, sources);
   assert.ok(
     uncited?.ok === false && typeof uncited.reason === "string" && uncited.reason.trim() !== "",
-    `checkCitations returned ${show(uncited)} for an answered reply with no citations. An answer needs at least one source behind it: it should return { ok: false, reason }, with a reason you choose.`,
+    `checkCitations returned ${show(uncited)} for an answered reply with no citations. An answer needs at least one source behind it: it should return { ok: false, reason }, with any reason you like.`,
   );
   const cases = [
     [
@@ -298,7 +298,7 @@ test("rejects an answer with no citations, or one that cites a chunk that wasn't
   assert.deepEqual(
     result,
     { status: "insufficient", text: HANDOFF, reason: "cited chunks that weren't sent: kc-gift-cards-v1-3" },
-    `answerQuestion returned ${show(result)} for a reply that cites kc-gift-cards-v1-3, a row at 0.593 the request never sent. Check the citations against the sources: it should hand off, with checkCitations' reason.`,
+    `answerQuestion returned ${show(result)} for a reply that cites kc-gift-cards-v1-3, a row at 0.593 that wasn't in the request. Check the citations against the sources: it should hand off, with checkCitations' reason.`,
   );
 });
 

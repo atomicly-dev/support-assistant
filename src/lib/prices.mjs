@@ -6,7 +6,7 @@
 // this project's requests stay far below that.
 export const PRICE = { input: 0.1, cachedInput: 0.01, cacheWrite: 0.125, output: 0.5 };
 
-/** The cost of a call from its usage, in US dollars. Usage without cache counts reads and writes none. */
+/** The cost of a call from its usage, in US dollars. Usage without cache fields counts no cache reads or writes. */
 export const usageUsd = ({ input, cached = 0, written = 0, output }) =>
   ((input - cached - written) * PRICE.input + cached * PRICE.cachedInput + written * PRICE.cacheWrite + output * PRICE.output) / 1e6;
 

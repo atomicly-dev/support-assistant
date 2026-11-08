@@ -1,7 +1,7 @@
 name: template-ci
 
-# The template's own check, for its maintainers: on main, every milestone fails, and on the
-# solutions branch, every milestone passes, on main's tests. It runs only in the template repo,
+# Checks the template itself, for its maintainers: on main, every milestone fails, and on the
+# solutions branch, every milestone passes with main's tests. It runs only in the template repo,
 # never in a copy made from it.
 
 # Each job checks out its own branch, so a push to either branch checks both.

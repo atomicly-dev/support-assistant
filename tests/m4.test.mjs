@@ -52,7 +52,7 @@ test("scores hit rate and recall per question, so one that found 1 of its 3 chun
   assert.equal(
     metrics.recall,
     0.933,
-    `retrievalMetrics gave a recall of ${show(metrics.recall)} at k = 3. Average each question's recall@3, so each question weighs the same: 9 questions at 1, and q-cracked-mug at 1 of 3, make 0.933.`,
+    `retrievalMetrics gave a recall of ${show(metrics.recall)} at k = 3. Average each question's recall@3, so each question counts the same: 9 questions at 1, and q-cracked-mug at 1 of 3, make 0.933.`,
   );
   const other = retrievalMetrics(madeUp, madeUpRankings, 3);
   assert.deepEqual(
@@ -68,14 +68,14 @@ test("takes MRR from each question's first relevant chunk, in the whole ranking"
     assert.equal(
       metrics?.mrr,
       0.933,
-      `retrievalMetrics gave an MRR of ${show(metrics?.mrr)} at k = ${k}. q-parcel-never-came's first relevant chunk is third. MRR reads the whole ranking, so it scores 1/3 whatever k is, and the other 9 score 1: 0.933.`,
+      `retrievalMetrics gave an MRR of ${show(metrics?.mrr)} at k = ${k}. q-parcel-never-came's first relevant chunk is third. MRR uses the whole ranking, so it scores 1/3 whatever k is, and the other 9 score 1: 0.933.`,
     );
   }
   const other = retrievalMetrics(madeUp, madeUpRankings, 3);
   assert.equal(
     other?.mrr,
     0.625,
-    `retrievalMetrics gave an MRR of ${show(other?.mrr)} for two made-up questions, whose first relevant chunks are first and fourth. MRR reads the whole ranking, not only the top k: (1 + 1/4) / 2 = 0.625.`,
+    `retrievalMetrics gave an MRR of ${show(other?.mrr)} for two made-up questions, whose first relevant chunks are first and fourth. MRR uses the whole ranking, not only the top k: (1 + 1/4) / 2 = 0.625.`,
   );
 });
 
@@ -97,7 +97,7 @@ test("fails an answer on the code checks first, then on the judge's verdict", ()
   assert.deepEqual(
     chair,
     { id: "kc-office-chair", grade: "fail", reasons: ["wrong handoff"] },
-    `gradeAnswer returned ${show(chair)} for an answer to a question Kettle & Co's help pages can't answer. It should hand off, so the grade is fail, with the reason "wrong handoff".`,
+    `gradeAnswer returned ${show(chair)} for an answer to a question Kettle & Co's help pages don't cover. It should have handed off, so the grade is fail, with the reason "wrong handoff".`,
   );
 
   const window = caseById.get("kc-refund-window");
@@ -106,7 +106,7 @@ test("fails an answer on the code checks first, then on the judge's verdict", ()
   assert.deepEqual(
     handoff?.reasons,
     ["wrong handoff", 'missing "30 days"'],
-    `gradeAnswer returned ${show(handoff)} for a handoff on "How many days do I have to ask for a refund?", which the help pages answer. A handoff where none should be is a wrong handoff too: the reasons should be ["wrong handoff", 'missing "30 days"'].`,
+    `gradeAnswer returned ${show(handoff)} for a handoff on "How many days do I have to ask for a refund?", which the help pages cover. A handoff where there shouldn't be one is a wrong handoff too: the reasons should be ["wrong handoff", 'missing "30 days"'].`,
   );
   const capital = grade(window, { status: "answered", text: "You have 30 Days from delivery.", citations: ["kc-refund-policy-v2-1"] }, pass);
   assert.equal(capital?.grade, "pass", `gradeAnswer returned ${show(capital)} for "You have 30 Days from delivery.". The phrases are in lowercase, so compare them with the answer's text in lowercase.`);
@@ -140,7 +140,7 @@ test("counts the ungraded cases as not passed in the pass rate", () => {
     [2, 7],
     `summarize counted ${show(summary?.passed)} passes of ${show(summary?.total)} for grades with 2 passes, 2 fails, and 3 ungraded cases. It should count 2 of 7.`,
   );
-  assert.equal(summary.passRate, 0.286, `summarize gave a pass rate of ${show(summary.passRate)}. It divides the passes by every case, ungraded ones too: 2 of 7 is 0.286.`);
+  assert.equal(summary.passRate, 0.286, `summarize gave a pass rate of ${show(summary.passRate)}. Divide the passes by all the cases, ungraded ones too: 2 of 7 is 0.286.`);
   assert.deepEqual(summary.ungraded, ["kc-cracked-mug", "kc-billed-twice", "dw-desk-lamp"], `summarize listed ${show(summary.ungraded)} as ungraded. List every ungraded case's id, in the run's order, so you can rerun them.`);
 });
 
@@ -153,7 +153,7 @@ test("lists the cases the baseline passed and this run fails", () => {
   );
 });
 
-test("leaves a case the baseline never had out of broken", () => {
+test("doesn't count a case the baseline never had as broken", () => {
   // The new case: since the baseline, the team added kc-kettle-fault to the eval set, and it fails.
   const grown = [...grades, { id: "kc-kettle-fault", grade: "fail", reasons: ['missing "2 years"'] }];
   const summary = summarize(grown, run.baseline);

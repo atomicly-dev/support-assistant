@@ -56,7 +56,7 @@ const STATUSES = new Map([
  * Reads a parsed Chat Completions response body.
  * Returns { status, text, usage }: status is "complete", "cut_off", "tool_call", "filtered", or
  * "refused", text is the message's content (null for a refusal), and usage is { input, output }.
- * Throws for a finish_reason it doesn't know.
+ * Throws for an unknown finish_reason.
  */
 export function readCompletion(completion) {
   const { message, finish_reason } = completion.choices[0];

@@ -15,7 +15,7 @@ const complete = { status: "complete", text: "Order 1042 was delivered on Octobe
 
 // "the subscriber's spend is 15 cents", or "the subscriber has no spend recorded", for a message.
 const spend = (budget, user, who) => (budget.users.get(user.id) === undefined ? `${who} has no spend recorded` : `${who}'s spend is ${show(budget.users.get(user.id))} cents`);
-// A reason of the learner's choice: any text that isn't empty.
+// Any reason the learner picks: a string that isn't empty.
 const isReason = (reason) => typeof reason === "string" && reason.trim() !== "";
 
 test("reserves against the user's plan limit, then the global limit", () => {
@@ -93,11 +93,11 @@ test("charges nothing more for a settle sent twice", () => {
   const { id } = reserve(budget, trial, 15) ?? {};
   settle(budget, id, 9);
   const again = settle(budget, id, 9);
-  assert.ok(again?.ok === false && isReason(again.reason), `settle returned ${show(again)} for a reservation it already settled. It should return { ok: false, reason }, with a reason you choose.`);
+  assert.ok(again?.ok === false && isReason(again.reason), `settle returned ${show(again)} for a reservation that's already settled. It should return { ok: false, reason }, with any reason you like.`);
   assert.equal(budget.users.get(trial.id), 9, `After the same settle twice, ${spend(budget, trial, "the trial user")}. It should stay 9 cents.`);
   assert.equal(budget.total, 9, `budget.total is ${show(budget.total)} cents after the same settle twice. It should stay 9.`);
   const never = settle(budget, "r-404", 5);
-  assert.ok(never?.ok === false && isReason(never.reason), `settle returned ${show(never)} for an id reserve never returned. It should return { ok: false, reason }, with a reason you choose.`);
+  assert.ok(never?.ok === false && isReason(never.reason), `settle returned ${show(never)} for an id reserve never returned. It should return { ok: false, reason }, with any reason you like.`);
   assert.equal(budget.total, 9, `budget.total is ${show(budget.total)} cents after a settle of an id reserve never returned. It should stay 9.`);
 });
 
@@ -131,7 +131,7 @@ test("settles a failed call to its reservation, and passes its error on", async 
     rethrowNotBuilt(error);
     thrown = error;
   }
-  assert.equal(thrown, timeout, `callWithBudget ${thrown ? `threw ${show(thrown?.message ?? thrown)}` : "resolved"} when model.complete threw "${timeout.message}". It should throw that same error, so the caller knows the call failed.`);
+  assert.equal(thrown, timeout, `callWithBudget ${thrown ? `threw ${show(thrown?.message ?? thrown)}` : "resolved"} when model.complete threw "${timeout.message}". It should throw that same error, so the failure reaches the caller.`);
   assert.deepEqual(
     [budget.users.get(subscriber.id), budget.total],
     [15, 15],
@@ -158,7 +158,7 @@ test("keeps a trace's cost from usage apart from its estimated cost", () => {
   assert.deepEqual(
     rounded,
     { fromUsage: "0.000268", estimated: "0.000725" },
-    `traceTotals returned ${show(totals)}. Price the spans with usage by usageUsd, and the one without by estimatedUsd, in two sums: from usage 0.000268, estimated 0.000725.`,
+    `traceTotals returned ${show(totals)}. Use usageUsd for the spans with usage and estimatedUsd for the one without, in two separate sums: from usage 0.000268, estimated 0.000725.`,
   );
 });
 

@@ -74,7 +74,7 @@ test("proposes only the customer's own order, for 1 cent up to its total", async
   assert.equal(desk.proposals.size, 0, `desk.proposals holds ${show([...desk.proposals.values()])}. None of those calls should store a proposal.`);
   for (const amountCents of [1, 8900]) {
     const result = await proposeRefund({ orderId: 1040, amountCents }, ana, desk);
-    assert.equal(result?.status, "awaiting approval", `proposeRefund returned ${show(result)} for amountCents ${amountCents} on order 1040, which cost 8900 cents. From 1 cent to the whole total, the amount fits.`);
+    assert.equal(result?.status, "awaiting approval", `proposeRefund returned ${show(result)} for amountCents ${amountCents} on order 1040, which cost 8900 cents. Any amount from 1 cent up to the whole total fits.`);
   }
 });
 
@@ -132,7 +132,7 @@ test("refuses an unknown approval, another agent's, or an expired one", async ()
     `executeRefund returned ${show(bySam)} when Sam ran Priya's approval, with Priya's id in the command. The agent comes from the login, never the command: { error: 'approved by another agent' }.`,
   );
   const late = await execute({ approvalId: approval.approvalId, args }, priya, NOW + 15 * MINUTE, desk);
-  assert.deepEqual(late, { error: "approval expired" }, `executeRefund returned ${show(late)} at the approval's expiry, 15 minutes after it. From expiresAt on, it should return { error: 'approval expired' }.`);
+  assert.deepEqual(late, { error: "approval expired" }, `executeRefund returned ${show(late)} at the approval's expiry, 15 minutes after Priya approved it. From expiresAt on, it should return { error: 'approval expired' }.`);
   assert.equal(desk.ledger.refunds.size, 0, `The ledger paid ${show(paid(desk))}. It should pay nothing here.`);
 });
 
@@ -160,7 +160,7 @@ test("approves each proposal once, so a double approval can't pay twice", async 
     const refused = approvals[i];
     assert.ok(
       typeof refused?.error === "string" && refused.error.trim() !== "" && Object.keys(refused).length === 1,
-      `approve returned ${show(refused)} for ${who}, on a proposal Priya already approved. Each approval gets its own idempotency key, so the ledger can't tell a second approval from a new refund, and pays again. One proposal gets one approval: it should return { error }, with a message you choose.`,
+      `approve returned ${show(refused)} for ${who}, on a proposal Priya already approved. Each approval gets its own idempotency key, so the ledger gets a key it hasn't paid with yet, and pays again. One proposal gets one approval: it should return { error }, with any message you like.`,
     );
   }
   for (const [approval, agent] of [[approvals[0], priya], [approvals[1], priya], [approvals[2], sam]]) {
@@ -168,13 +168,13 @@ test("approves each proposal once, so a double approval can't pay twice", async 
   }
   assert.deepEqual(paid(desk), [{ refundId: "rf_1", ...toaster }], `The ledger paid ${show(paid(desk))} for one proposal. It should pay it once.`);
   const other = await proposeRefund({ orderId: 1048, amountCents: 1200 }, ana, desk);
-  assert.ok(approve(other?.proposalId, sam, NOW, desk)?.approvalId, `approve refused ${other?.proposalId}, a proposal nobody approved yet. Only a second approval of one proposal is refused.`);
+  assert.ok(approve(other?.proposalId, sam, NOW, desk)?.approvalId, `approve refused ${other?.proposalId}, a proposal nobody approved yet. Refuse only a second approval of the same proposal.`);
 });
 
-test("fails every call of the replayed injection transcripts, and pays nothing", async () => {
+test("fails every call in the replayed injection transcripts, and pays nothing", async () => {
   const { session, transcripts } = JSON.parse(readFileSync(new URL("fixtures/injection-replays.json", import.meta.url), "utf8"));
   const findOrder = orderLookup();
-  // Why a call must fail, for the message.
+  // Why a call has to fail, for the failure message.
   async function why(call) {
     const { orderId, amountCents } = call.args;
     const order = await findOrder(orderId);

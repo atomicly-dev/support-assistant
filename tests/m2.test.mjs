@@ -97,7 +97,7 @@ test("looks up the session customer's own order, with only the fields the answer
   );
 });
 
-test("answers another customer's order and a missing one the same way, whatever the arguments say", async () => {
+test("answers another customer's order and a missing one the same way, whatever's in the arguments", async () => {
   const cases = [
     ["Chen's order 1042", { orderId: 1042 }],
     ["Chen's order 1042, with Chen's email and shop in the arguments", { orderId: 1042, email: "chen.wei@example.com", tenantId: "kettleandco" }],
@@ -130,7 +130,7 @@ test("keeps one email's orders apart in each shop", async () => {
     assert.deepEqual(
       result,
       { error: "order not found" },
-      `getOrder returned ${show(result)} for ${label}. A customer is an email in one shop, so each session sees only that shop's orders: it should return { error: 'order not found' }.`,
+      `getOrder returned ${show(result)} for ${label}. A customer is an email in one shop, so a session gets only that shop's orders: it should return { error: 'order not found' }.`,
     );
   }
 });
@@ -164,7 +164,7 @@ test("runs only the tools on its list", async () => {
   assert.equal(ran, 0, `The get_order tool ran ${ran} times for calls to other tools. It shouldn't run at all.`);
 });
 
-test("passes the tool the session from the login, whatever the arguments say", async () => {
+test("passes the tool the login's session, whatever's in the arguments", async () => {
   const seen = [];
   const tools = new Map([["get_order", (args, session) => (seen.push(session), { error: "order not found" })]]);
   const call = { id: "call_S1", type: "function", function: { name: "get_order", arguments: '{"orderId":1042,"email":"chen.wei@example.com","tenantId":"kettleandco"}' } };
@@ -172,16 +172,16 @@ test("passes the tool the session from the login, whatever the arguments say", a
     await runToolCall(call, ana, tools, () => {});
   } catch (error) {
     rethrowNotBuilt(error);
-    assert.fail(`runToolCall threw "${error.message}" for a call whose arguments name Chen's email.`);
+    assert.fail(`runToolCall threw "${error.message}" for a call with Chen's email in its arguments.`);
   }
   assert.deepEqual(
     seen,
     [ana],
-    `The tool got the session ${show(seen[0])} for a call whose arguments name Chen's email, in Ana's session. Only the login says who the customer is: the tool should get the session runToolCall got, ${show(ana)}.`,
+    `The tool got the session ${show(seen[0])} for a call with Chen's email in its arguments, in Ana's session. The customer comes from the login: the tool should get the session runToolCall got, ${show(ana)}.`,
   );
 });
 
-test("answers every call with a tool message that names its id, failed calls too", async () => {
+test("answers every call with a tool message for its id, failed calls too", async () => {
   const logged = [];
   const ran = [];
   const tools = new Map([

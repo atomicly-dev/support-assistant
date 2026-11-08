@@ -8,7 +8,7 @@ import { randomUUID } from "node:crypto";
 // An approval works for 15 minutes.
 export const APPROVAL_MS = 15 * 60_000;
 
-// The tool as the model sees it. It stores a proposal and pays nothing.
+// The tool's definition, as the model gets it. The tool stores a proposal and pays nothing.
 export const PROPOSE_REFUND_TOOL = {
   type: "function",
   function: {

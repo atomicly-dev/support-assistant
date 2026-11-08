@@ -17,7 +17,7 @@ export default async function* reporter(source) {
     } else if (event.type === "test:fail" && /\.test\.mjs$/.test(data.name)) {
       // The test file itself failed, before any check ran: an import threw, such as a syntax error.
       unloaded = true;
-      yield `  ✖ The checks couldn't load your code. The error above shows the file and the line, such as a syntax error in src/.\n`;
+      yield `  ✖ The checks couldn't load your code, for example because of a syntax error in src/. The error above shows the file and the line.\n`;
     } else if (event.type === "test:fail") {
       failed++;
       yield `  ✖ ${data.name}\n${indent(describe(data.details.error))}\n`;
