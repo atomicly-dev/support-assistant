@@ -2,6 +2,7 @@ name: milestones
 
 # Runs each milestone's checks on every push, one job per milestone. atomicly reads these jobs'
 # results from GitHub by their names, milestone-1 to milestone-6, so keep the names as they are.
+# For a failed job, it also reads the annotations `npm run milestone` adds, one per failing check.
 
 on:
   push:

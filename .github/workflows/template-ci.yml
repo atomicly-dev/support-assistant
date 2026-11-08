@@ -30,7 +30,10 @@ jobs:
       - run: docker compose up -d --wait && npm run setup
       - name: milestones.json matches the tests
         run: npm run check-milestones
-      # A starter must fail every one of its checks, not just one.
+      - name: The annotations' escaping and limit work
+        run: node --test scripts/annotations.test.mjs
+      # A starter must fail every one of its checks, not just one, and print an annotation for each,
+      # at most 10. The log shows the annotations as text, so they don't mark this job as failed.
       - name: Every starter fails
         run: |
           for n in 1 2 3 4 5 6; do
@@ -38,9 +41,14 @@ jobs:
             output="$(npm run milestone -- "$n" 2>&1)"
             code=$?
             set -e
+            marker="$(uuidgen)"
+            echo "::stop-commands::$marker"
             echo "$output"
-            if [ "$code" -ne 1 ] || ! grep -q "^Milestone $n: 0 of " <<<"$output"; then
-              echo "::error::Milestone $n's starter should fail every check."
+            echo "::$marker::"
+            checks="$(node -p "Math.min(require('./milestones.json')[$n - 1].checks.length, 10)")"
+            annotations="$(grep -c '^::error title=' <<<"$output" || true)"
+            if [ "$code" -ne 1 ] || ! grep -q "^Milestone $n: 0 of " <<<"$output" || [ "$annotations" -ne "$checks" ]; then
+              echo "::error::Milestone $n's starter should fail every check, with one annotation for each."
               exit 1
             fi
           done

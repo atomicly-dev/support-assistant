@@ -1,12 +1,16 @@
 // A node:test reporter that prints each check by name, with the reason when it fails, and a count at
-// the end. scripts/milestone.mjs runs each milestone's tests with it.
+// the end. On GitHub Actions, it then prints a GitHub annotation for each failing check, with
+// scripts/annotations.mjs, and atomicly reads them. scripts/milestone.mjs runs each milestone's
+// tests with it.
+
+import { annotations } from "./annotations.mjs";
 
 const NOT_BUILT = /^Not built yet: milestone \d$/;
 
 export default async function* reporter(source) {
   let passed = 0;
-  let failed = 0;
   let unloaded = false;
+  const failures = [];
   for await (const event of source) {
     const { data } = event;
     if (event.type === "test:stdout" || event.type === "test:stderr") yield data.message;
@@ -19,12 +23,14 @@ export default async function* reporter(source) {
       unloaded = true;
       yield `  ✖ The checks couldn't load your code, for example because of a syntax error in src/. The error above shows the file and the line.\n`;
     } else if (event.type === "test:fail") {
-      failed++;
-      yield `  ✖ ${data.name}\n${indent(describe(data.details.error))}\n`;
+      const message = describe(data.details.error);
+      failures.push({ name: data.name, message });
+      yield `  ✖ ${data.name}\n${indent(message)}\n`;
     }
   }
   const label = process.env.MILESTONE ? `Milestone ${process.env.MILESTONE}` : "Total";
-  yield unloaded && passed + failed === 0 ? `\n${label}: the checks didn't run\n` : `\n${label}: ${passed} of ${passed + failed} checks pass\n`;
+  yield unloaded && passed + failures.length === 0 ? `\n${label}: the checks didn't run\n` : `\n${label}: ${passed} of ${passed + failures.length} checks pass\n`;
+  if (process.env.GITHUB_ACTIONS === "true" && failures.length > 0) yield `${annotations(failures).join("\n")}\n`;
 }
 
 function describe(error) {
