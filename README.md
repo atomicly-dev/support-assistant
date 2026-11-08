@@ -74,7 +74,7 @@ You can do them in any order. Each milestone's checks need only that milestone's
 
 Each push to your repo runs the same checks on GitHub Actions, in `.github/workflows/milestones.yml`: one job per milestone, named `milestone-1` to `milestone-6`. Milestone 3's job starts PostgreSQL first.
 
-On [the project's page on atomicly](https://atomicly.dev/projects/proj-support-assistant), paste your repo's URL once. atomicly then reads those checks from GitHub, and marks a milestone as passed from the first commit that passes it. It reads only whether each check passed, and it finds the checks by their job names, so keep those names as they are. atomicly can't read a private repo's checks, so for a private repo you tick each milestone yourself on the page.
+On [the project's page on atomicly](https://atomicly.dev/projects/proj-support-assistant), paste your repo's URL once. atomicly then reads those jobs' results from GitHub, and marks a milestone as passed from the first commit that passes it. For a milestone that doesn't pass yet, it also shows which checks failed and why. On GitHub, `npm run milestone` adds an annotation for each check that fails, with the check's name and its failure message, and atomicly reads those. You also see them on the workflow run's page. atomicly finds the jobs by their names, so keep those names as they are. atomicly can't read a private repo's checks, so for a private repo you tick each milestone yourself on the page.
 
 `.github/workflows/template-ci.yml` checks the template itself, for its maintainers. In your copy, GitHub skips its jobs, so they show as skipped.
 
