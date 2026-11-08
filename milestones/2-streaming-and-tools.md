@@ -1,5 +1,7 @@
 # Milestone 2: Streaming and tools
 
+Read this on atomicly, with the tutor beside it: [milestone 2 on atomicly](https://atomicly.dev/projects/proj-support-assistant/milestones/proj-support-m2).
+
 Lessons: [Streaming: a partial answer isn't a finished answer](https://atomicly.dev/lessons/ai-stream-events), [Tool calling: a call is a request for your code to act](https://atomicly.dev/lessons/ai-tool-contracts), and [The agent loop: complete the tool exchange](https://atomicly.dev/lessons/ai-tool-transcript)
 
 ## The situation
@@ -89,7 +91,7 @@ The checks use the dataset's orders from `data/orders.json`, so they need no dat
 
 ## Hints
 
-Open them one at a time, when you're stuck.
+Each hint gives away a bit more. Open only the one you need.
 
 <details>
 <summary>Hint 1: where the course teaches it</summary>
