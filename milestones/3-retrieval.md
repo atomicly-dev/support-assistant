@@ -1,5 +1,7 @@
 # Milestone 3: Retrieval
 
+Read this on atomicly, with the tutor beside it: [milestone 3 on atomicly](https://atomicly.dev/projects/proj-support-assistant/milestones/proj-support-m3).
+
 Lessons: [Embeddings: what a vector lets you compare](https://atomicly.dev/lessons/ai-embeddings), [Vector search: find the nearest authorized chunks](https://atomicly.dev/lessons/ai-vector-search), and [RAG: ground the answer in retrieved chunks](https://atomicly.dev/lessons/ai-grounded-answers)
 
 ## The situation
@@ -90,7 +92,7 @@ To try your query by hand, connect with `docker compose exec postgres psql -U po
 
 ## Hints
 
-Open them one at a time, when you're stuck.
+Each hint gives away a bit more. Open only the one you need.
 
 <details>
 <summary>Hint 1: where the course teaches it</summary>

@@ -55,7 +55,7 @@ On a fresh copy, every check fails with "Not built yet". That's the starting poi
 
 ## The milestones
 
-Each milestone has a page with the situation, the functions to write with their inputs and outputs, the rules they must follow, and a new case the lessons don't show. Its hints open one at a time, from the lesson to read to the approach. Every function to write throws `Not built yet: milestone <n>` until you write it. The rest of each file, and everything in `src/lib/`, is plumbing you don't need to change.
+Read each milestone on [the project's page on atomicly](https://atomicly.dev/projects/proj-support-assistant). The tutor sits beside the spec there, and the page shows your checks. The same pages are in `milestones/`, to read next to your code. Each one has the situation, the functions to write with their inputs and outputs, the rules they must follow, and a new case the lessons don't show. Its three hints each give away a bit more: the lesson to read, the approach, and a detail that's easy to get wrong. Every function to write throws `Not built yet: milestone <n>` until you write it. The rest of each file, and everything in `src/lib/`, is plumbing you don't need to change.
 
 | Milestone | You write | Command |
 | --- | --- | --- |

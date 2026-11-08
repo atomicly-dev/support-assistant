@@ -1,5 +1,7 @@
 # Milestone 6: Budgets and traces
 
+Read this on atomicly, with the tutor beside it: [milestone 6 on atomicly](https://atomicly.dev/projects/proj-support-assistant/milestones/proj-support-m6).
+
 Lessons: [Rate limiting by cost: budget the whole request](https://atomicly.dev/lessons/ai-service-budgets) and [Tracing: explain a slower, more expensive answer](https://atomicly.dev/lessons/ai-incident-traces)
 
 ## The situation
@@ -76,7 +78,7 @@ The checks use the fake model from `src/lib/fake-model.mjs`: each call costs at 
 
 ## Hints
 
-Open them one at a time, when you're stuck.
+Each hint gives away a bit more. Open only the one you need.
 
 <details>
 <summary>Hint 1: where the course teaches it</summary>

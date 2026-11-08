@@ -1,5 +1,7 @@
 # Milestone 5: Refunds
 
+Read this on atomicly, with the tutor beside it: [milestone 5 on atomicly](https://atomicly.dev/projects/proj-support-assistant/milestones/proj-support-m5).
+
 Lessons: [Human-in-the-loop approval: bind it to the action executed](https://atomicly.dev/lessons/ai-safe-actions) and [Prompt injection: retrieved text can contain hostile instructions](https://atomicly.dev/lessons/ai-prompt-injection)
 
 ## The situation
@@ -79,7 +81,7 @@ The checks use the dataset's orders. They also replay the scripted transcripts i
 
 ## Hints
 
-Open them one at a time, when you're stuck.
+Each hint gives away a bit more. Open only the one you need.
 
 <details>
 <summary>Hint 1: where the course teaches it</summary>

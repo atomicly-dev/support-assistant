@@ -1,5 +1,7 @@
 # Milestone 1: The model boundary
 
+Read this on atomicly, with the tutor beside it: [milestone 1 on atomicly](https://atomicly.dev/projects/proj-support-assistant/milestones/proj-support-m1).
+
 Lessons: [Model API responses: what happens in a model call](https://atomicly.dev/lessons/ai-model-boundary) and [Structured output: turn model output into validated data](https://atomicly.dev/lessons/ai-structured-results)
 
 ## The situation
@@ -77,7 +79,7 @@ The checks need no database and no key:
 
 ## Hints
 
-Open them one at a time, when you're stuck.
+Each hint gives away a bit more. Open only the one you need.
 
 <details>
 <summary>Hint 1: where the course teaches it</summary>

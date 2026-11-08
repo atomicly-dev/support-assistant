@@ -1,5 +1,7 @@
 # Milestone 4: Evals
 
+Read this on atomicly, with the tutor beside it: [milestone 4 on atomicly](https://atomicly.dev/projects/proj-support-assistant/milestones/proj-support-m4).
+
 Lessons: [Evals: grade a prompt change on labeled tickets](https://atomicly.dev/lessons/ai-first-eval), [Retrieval evals: find whether retrieval lost the answer](https://atomicly.dev/lessons/ai-retrieval-evals), and [LLM-as-a-judge: grade quality without trusting the grader](https://atomicly.dev/lessons/ai-answer-evals)
 
 ## The situation
@@ -108,7 +110,7 @@ With `--live`, it runs the answer eval too: your `searchChunks` and `answerQuest
 
 ## Hints
 
-Open them one at a time, when you're stuck.
+Each hint gives away a bit more. Open only the one you need.
 
 <details>
 <summary>Hint 1: where the course teaches it</summary>
